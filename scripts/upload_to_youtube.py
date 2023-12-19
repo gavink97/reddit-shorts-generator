@@ -54,7 +54,7 @@ def get_authenticated_service(args):
     return build(YOUTUBE_API_SERVICE_NAME, YOUTUBE_API_VERSION, http=credentials.authorize(httplib2.Http()))
 
 
-def initialize_upload(youtube, youtube_short_file, short_video_title, video_description, video_category, video_keywords, video_privacy_status):
+def initialize_upload(youtube, youtube_short_file, short_video_title, video_description, video_category, video_keywords, video_privacy_status, notify_subs):
 
     tags = None
     if video_keywords:
@@ -71,8 +71,6 @@ def initialize_upload(youtube, youtube_short_file, short_video_title, video_desc
                 privacyStatus=video_privacy_status
                 )
             )
-
-    notify_subs = False
 
     insert_request = youtube.videos().insert(
             part=",".join(body.keys()),

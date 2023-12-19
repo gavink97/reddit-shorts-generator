@@ -1,5 +1,4 @@
 import os
-import sys
 import time
 import praw
 import ssl
@@ -8,33 +7,27 @@ import moviepy.video.fx.all as vfx
 import math
 import random
 import json
-import pytz
 import datetime
 from dotenv import load_dotenv
 from praw.models import MoreComments
-from tiktok_tts import tts
-from moviepy.editor import *
+from scripts.tiktok_tts import tts
+from moviepy.editor import CompositeVideoClip, CompositeAudioClip, TextClip, AudioFileClip, VideoFileClip, ImageClip
 from moviepy.audio.fx.volumex import volumex
 from moviepy.audio.fx.all import audio_fadeout
 from moviepy.video.fx.resize import resize
 from moviepy.video.fx.fadeout import fadeout
-from upload_to_youtube import initialize_upload, get_authenticated_service
+from scripts.upload_to_youtube import initialize_upload, get_authenticated_service
 from apiclient.errors import HttpError
 from oauth2client.tools import argparser
 from PIL import Image, ImageFont, ImageDraw
+from config import launcher_path
 
 ssl._create_default_https_context = ssl._create_unverified_context
-
-# launcher_path = sys.argv[0]
-launcher_path = "/Users/gavinkondrath/projects/youtube_shorts"
-
-timezone = pytz.timezone('US/Central')
-current_time = datetime.datetime.now(timezone).strftime("%Y-%m-%d %H:%M")
 
 load_dotenv()
 reddit_client_id = os.environ['REDDIT_CLIENT_ID']
 reddit_client_secret = os.environ['REDDIT_CLIENT_SECRET']
-tiktok_session_id = os.environ['TIKTOK_SESSION_ID']
+tiktok_session_id = os.environ['TIKTOK_SESSION_ID_TTS']
 youtube_api_client = os.environ['YOUTUBE_API_CLIENT_ID']
 youtube_api_secret = os.environ['YOUTUBE_API_CLIENT_SECRET']
 
@@ -47,7 +40,7 @@ reddit = praw.Reddit(
         )
 
 
-def get_story_from_reddit():
+def get_story_from_reddit(subreddits: []):
     global submission_subreddit
     global submission_author
     global submission_title
@@ -58,8 +51,9 @@ def get_story_from_reddit():
     global top_comment_body
     global tts_character_limit
     global youtube_only_tts
+    global subreddit
 
-    youtube_tts_file = f"{launcher_path}/youtube_tts.txt"
+    youtube_tts_file = os.path.join(launcher_path, "youtube_tts.txt")
 
     try:
         with open(youtube_tts_file, 'r') as file:
@@ -68,51 +62,53 @@ def get_story_from_reddit():
     except FileNotFoundError:
         print(f"File {youtube_tts_file} not found.")
 
-    # Make stories taken from reddit more random
-    # Make an array of subreddits to take the stories from
-
     tts_character_limit = 200
-    submission_subreddit = "askreddit"
-    subreddit = reddit.subreddit(submission_subreddit)
-    for submission in subreddit.hot(limit=3):
+    subreddit = random.choice(subreddits)
+
+    while True:
+        submission = reddit.subreddit(subreddit).random()
+
+        if submission is None:
+            print(f"This subreddit bans the use of .random: {subreddit}")
+            continue
+
+        print(f"{subreddit}: {submission.title}")
+
         submission_author = submission.author
         submission_title = submission.title
         submission_score = submission.score
         submission_comments_number = submission.num_comments
         submission_timestamp = submission.created_utc
-        comment_counter = 1
-        comment_counter_limit = 10
 
         print(f"Submissions title length: {len(submission_title)}")
         if len(submission_title) > tts_character_limit:
-            with open(f'{launcher_path}/ttsoutput/texts/{submission_author}.txt', 'w', encoding='utf-8') as file:
+            with open(f'{launcher_path}/temp/ttsoutput/texts/{submission_author}.txt', 'w', encoding='utf-8') as file:
                 file.write(submission_title)
+
+        suitable_submission = False
 
         for top_level_comment in submission.comments:
             if isinstance(top_level_comment, MoreComments):
                 continue
-            comment_counter += 1
+
             top_comment_author = top_level_comment.author
             top_comment_body = top_level_comment.body
 
             print(f"Top Comment length: {len(top_comment_body)}")
 
-            total_length = len(youtube_only_tts) + len(submission_title) + len(top_comment_body)
+            total_length = len(submission_title) + len(top_comment_body) + len(youtube_only_tts)
 
             print(f"Total length: {total_length}")
 
-            if total_length <= 300 or total_length > 900:
-                continue
-
-            else:
-
-                if len(top_comment_body) > tts_character_limit:
-                    with open(f'{launcher_path}/ttsoutput/texts/{top_comment_author}.txt', 'w', encoding='utf-8') as file:
-                        file.write(top_comment_body)
-                        return top_level_comment, submission
-
-            if comment_counter == comment_counter_limit:
+            if 300 < total_length <= 900:
+                suitable_submission = True
+                with open(f'{launcher_path}/temp/ttsoutput/texts/{top_comment_author}.txt', 'w', encoding='utf-8') as file:
+                    file.write(top_comment_body)
                 break
+
+        if suitable_submission:
+            print("found suitable submission")
+            break
 
 
 def split_string_at_space(text, index):
@@ -167,9 +163,11 @@ def generate_reddit_story_image():
     global submission_timestamp
     global submission_score
     global submission_comments_number
+    global subreddit
 
     story_template = Image.open(f"{launcher_path}/resources/images/reddit_submission_template.png")
-    submission_image = f"{launcher_path}/resources/images/{submission_author}_submission_image.png"
+    submission_image = f"{launcher_path}/temp/images/{submission_author}.png"
+    community_logo_path = f"{launcher_path}/resources/images/subreddits/{subreddit}.png"
 
     if len(str(submission_author)) > 22:
         submission_author_formatted = str(submission_author)[:22]
@@ -207,10 +205,7 @@ def generate_reddit_story_image():
     twenty_pt_reg = ImageFont.truetype("arial.ttf", 82)
     twenty_six_pt_bold = ImageFont.truetype("arialbd.ttf", 110)
 
-    # write function to take into account other subreddits
-
-    subreddit_image_path = f"{launcher_path}/resources/images/askreddit_community.png"
-    community_logo = Image.open(subreddit_image_path)
+    community_logo = Image.open(community_logo_path)
     community_logo = community_logo.resize((244, 244))
 
     story_template.paste(community_logo, (222, 368), mask=community_logo)
@@ -250,9 +245,11 @@ def generate_tiktok_tts():
     tiktok_commentor = "en_us_006"
     my_tts = "en_us_007"
 
-    narrator_track = f"{launcher_path}/ttsoutput/{submission_author}.mp3"
-    commentor_track = f"{launcher_path}/ttsoutput/{top_comment_author}.mp3"
-    youtube_only_track = f"{launcher_path}/ttsoutput/youtube_only.mp3"
+    narrator_track = f"{launcher_path}/temp/ttsoutput/{submission_author}.mp3"
+    commentor_track = f"{launcher_path}/temp/ttsoutput/{top_comment_author}.mp3"
+    youtube_only_track = f"{launcher_path}/temp/ttsoutput/youtube_only.mp3"
+    submission_text = f'{launcher_path}/temp/ttsoutput/texts/{submission_author}.txt'
+    top_comment_text = f'{launcher_path}/temp/ttsoutput/texts/{top_comment_author}.txt'
 
     if len(youtube_only_tts) > tts_character_limit:
         tts(session_id=tiktok_session_id, text_speaker=my_tts,
@@ -264,7 +261,7 @@ def generate_tiktok_tts():
 
     if len(submission_title) > tts_character_limit:
         tts(session_id=tiktok_session_id, text_speaker=tiktok_narrator,
-            file=f'{launcher_path}/ttsoutput/texts/{submission_author}.txt', filename=narrator_track)
+            file=submission_text, filename=narrator_track)
 
     else:
         tts(session_id=tiktok_session_id, text_speaker=tiktok_narrator,
@@ -272,64 +269,77 @@ def generate_tiktok_tts():
 
     if len(top_comment_body) > tts_character_limit:
         tts(session_id=tiktok_session_id, text_speaker=tiktok_commentor,
-            file=f'{launcher_path}/ttsoutput/texts/{top_comment_author}.txt', filename=commentor_track)
+            file=top_comment_text, filename=commentor_track)
 
     else:
         tts(session_id=tiktok_session_id, text_speaker=tiktok_commentor,
             req_text=top_comment_body, filename=commentor_track)
 
+    if os.path.exists(submission_text):
+        os.remove(submission_text)
 
-def create_youtube_short():
+    if os.path.exists(top_comment_text):
+        os.remove(top_comment_text)
+
+
+def check_video_fps(footage: []):
+    for video in footage:
+        check_fps = VideoFileClip(video)
+        rate = check_fps.fps
+
+        print(f"FPS : {str(rate)}")
+
+        if rate != 30:
+            check_fps.write_videofile(video, fps=30)
+
+
+def create_short_video(footage: [], music: []):
     global narrator_track
     global commentor_track
     global youtube_only_track
-    global youtube_short_file
     global submission_author
 
-    submission_image = f"{launcher_path}/resources/images/{submission_author}_submission_image.png"
+    submission_image = f"{launcher_path}/temp/images/{submission_author}.png"
+    short_file_path = f"{launcher_path}/temp/uploads/youtube/{submission_author}.mp4"
+    tts_combined = f"{launcher_path}/temp/ttsoutput/combined.mp3"
 
-    # fix the stupid bug with the audio clip
-    # make array of minecraft gameplay / other videos to use for videos
-    # make array of music to use for videos that takes volumex into account
+    random_video = random.choice(footage)
+    resource_music = random.choice(music)
+
+    # print(random_video)
+    # print(resource_music)
+
     # add gaussian blur effect to beginning of the video
     # style the subtitles better
-
-    short_file_name = f"{submission_author}"
-    youtube_short_file = f"{launcher_path}/uploads/youtube/{short_file_name}.mp4"
-
-    minecraft_gameplay = f"{launcher_path}/resources/footage/relaxing_minecraft_parkour.mp4"
 
     narrator_audio = AudioFileClip(narrator_track)
     commentor_audio = AudioFileClip(commentor_track)
     youtube_only_audio = AudioFileClip(youtube_only_track)
 
-    # this addresses some bug with moviepy
     narrator_audio.set_start(0.35)
     narrator_audio.set_end(narrator_audio.duration - 0.35)
     commentor_audio.set_start(0.35)
-    commentor_audio.set_end(commentor_audio.duration - 0.40)
+    commentor_audio.set_end(commentor_audio.duration - 0.35)
     commentor_audio_adjusted = volumex(commentor_audio, 1.4)
     youtube_only_audio.set_start(0.35)
     youtube_only_audio.set_end(youtube_only_audio.duration - 0.35)
     youtube_only_adjusted = volumex(youtube_only_audio, 1.5)
 
-    space_between_tts = 2
+    space_between_tts = 1
 
     narrator_audio_duration = math.floor(narrator_audio.duration + space_between_tts)
     commentor_audio_duration = math.floor(commentor_audio.duration + space_between_tts)
     youtube_only_audio_duration = math.floor(youtube_only_audio.duration)
 
     soundduration = narrator_audio_duration + commentor_audio_duration + youtube_only_audio_duration + 2
-    minecraft_video = VideoFileClip(minecraft_gameplay)
-    resource_video_duration = math.floor(minecraft_video.duration)
+    calculating_random_video_duration = VideoFileClip(random_video)  # can probably refactor this
+    resource_video_duration = math.floor(calculating_random_video_duration.duration)
 
     point = random.randint(0, resource_video_duration - soundduration)
 
-    uplifting_music = f"{launcher_path}/resources/music/uplifting.mp3"
-
-    music_track = AudioFileClip(uplifting_music).subclip(0, soundduration)
-    music_track.set_start(0.35)
-    music_track.set_end(music_track.duration - 0.35)
+    music_track = AudioFileClip(resource_music).subclip(0, soundduration)
+    # music_track.set_start(0.35)
+    # music_track.set_end(music_track.duration - 0.35)
     music_track_adjusted = volumex(music_track, 0.3)
     music_track_faded = audio_fadeout(music_track_adjusted, 5)
 
@@ -338,10 +348,15 @@ def create_youtube_short():
                                        youtube_only_adjusted.set_start(narrator_audio_duration + commentor_audio_duration),
                                        music_track_faded])
 
-    tts_combined = f"{launcher_path}/ttsoutput/combined.mp3"
-    tracks_mixed.write_audiofile(tts_combined, fps=44100)
-    whisper_model = whisper_timestamped.load_model("base", device="cpu")
-    track_mixed_transcribed = whisper_timestamped.transcribe(whisper_model, tts_combined, language="en", beam_size=5, best_of=5, temperature=(0.0, 0.2, 0.4, 0.6, 0.8, 1.0), fp16=False)
+    tts_only = CompositeAudioClip([narrator_audio,
+                                   commentor_audio_adjusted.set_start(narrator_audio_duration),
+                                   youtube_only_adjusted.set_start(narrator_audio_duration + commentor_audio_duration)])
+
+    # fix bug with whisper not transcribing subtitles correctly
+
+    tts_only.write_audiofile(tts_combined, fps=44100)
+    whisper_model = whisper_timestamped.load_model("medium", device="cpu")
+    track_mixed_transcribed = whisper_timestamped.transcribe(whisper_model, tts_combined, fp16=False)
 
     channel_watermark = TextClip("@HIDDEN Reddit", fontsize=10, color="white").set_position((360, 20)).set_duration(soundduration)
 
@@ -349,7 +364,7 @@ def create_youtube_short():
     reddit_image_resized = resize(reddit_image, 0.16)
     reddit_image_resized = reddit_image_resized.set_pos(("center", 200))
 
-    resource_video_clipped = VideoFileClip(minecraft_gameplay).subclip(point, point + soundduration)
+    resource_video_clipped = VideoFileClip(random_video).subclip(point, point + soundduration)
     (w, h) = resource_video_clipped.size
     resource_video_clipped = vfx.crop(resource_video_clipped, width=480, height=720, x_center=w/2, y_center=h/2)
     resource_video_clipped.audio = tracks_mixed
@@ -369,18 +384,26 @@ def create_youtube_short():
             subtitle_track = subtitle_track.set_start(subtitle_start).set_duration(subtitle_duration).set_pos(("center", 550))
             subtitles.append(subtitle_track)
 
-
     resource_video_clipped = CompositeVideoClip(subtitles)
     resource_video_clipped_fx = fadeout(resource_video_clipped, 5)
-    resource_video_clipped_fx.write_videofile(youtube_short_file, fps=30)
+    resource_video_clipped_fx.write_videofile(short_file_path, fps=30, codec="libx264", audio_codec="aac")
+
+    return short_file_path
+
+    os.remove(narrator_track)
+    os.remove(commentor_track)
+    os.remove(youtube_only_track)
+    os.remove(tts_combined)
+    os.remove(submission_image)
 
 
 def create_video_title():
     global submission_title
     global short_video_title
+    global subreddit
     youtube_title_limit = 100
 
-    youtube_hashtags = "#reddit #askreddit"
+    youtube_hashtags = f"#reddit #{subreddit}"
 
     truncation_limit = youtube_title_limit - len(youtube_hashtags) - 4
 
@@ -393,33 +416,24 @@ def create_video_title():
     else:
         short_video_title = f"{submission_title} {youtube_hashtags}"
 
+    print(short_video_title)
+    return short_video_title
 
-def upload_short_to_youtube(youtube_short_file, short_video_title):
 
+def upload_short_to_youtube(short_file_path, short_video_title):
     args = argparser.parse_args()
     video_description = ""
-    video_category = "24"
+    video_category = "20"  # Gaming
     video_keywords = ""
-    video_privacy_status = "private"
+    video_privacy_status = "public"
+    notify_subs = True
 
     youtube = get_authenticated_service(args)
 
     try:
-        initialize_upload(youtube, youtube_short_file, short_video_title, video_description, video_category, video_keywords, video_privacy_status)
+        initialize_upload(youtube, short_file_path, short_video_title, video_description, video_category, video_keywords, video_privacy_status, notify_subs)
 
     except HttpError as e:
         print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
 
-
-# def clean_up():
-    # Delete all files generated when making the video
-
-
-# replace globals with parameters for each function
-get_story_from_reddit()
-generate_reddit_story_image()
-generate_tiktok_tts()
-create_youtube_short()
-# create_video_title()
-# upload_short_to_youtube(youtube_short_file, short_video_title)
-# clean_up()
+    os.remove(short_file_path)

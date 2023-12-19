@@ -1,0 +1,48 @@
+[project]
+name = "tiktok-uploader"
+version = "1.0.14"
+authors = [
+  { name = "William Kaiser", email = "wkaisertexas@gmail.com" },
+]
+description = "An automatic TikTok video uploader w/ CLI. Uploads videos automatically using an automated browser and your cookies for authentication."
+readme = "README.md"
+requires-python = ">=3.0"
+keywords = [
+	"Selenium",
+	"Automation",
+	"TikTok",
+  "Video",
+  "Python",
+  "Upload",
+  "CLI",
+  "Command Line",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+dependencies = [
+	"selenium",
+	"webdriver_manager",
+  "toml",
+  "pytz"
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build" 
+
+[project.optional-dependencies]
+test = [
+  "pytest",
+]
+
+[project.scripts]
+tiktok-uploader = "tiktok_uploader.cli:main"
+tiktok-auth = "tiktok_uploader.cli:auth"
+
+[project.urls]
+"Source Code" = "https://github.com/wkaisertexas/tiktok-uploader"
+"Bug Tracker" = "https://github.com/wkaisertexas/tiktok-uploader/issues"
