@@ -1,0 +1,9 @@
+version: "3"
+services:
+
+  shorts:
+    image: gavink97/shorts:dev
+    build:
+      context: ${PWD}/pyapp
+      dockerfile: Dockerfile
+

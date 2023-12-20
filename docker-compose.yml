@@ -1,0 +1,42 @@
+version: "3"
+services:
+
+  shorts:
+    image: gavink97/shorts:dev
+    container_name: shorts
+    tty: true
+    volumes:
+      - ${PWD}/pyapp:/pyapp:rw
+    environment:
+      - TZ=${TZ}
+    depends_on:
+      - mysql
+    networks:
+      - network
+
+  mysql:
+    image: bitnami/mysql:8.2
+    container_name: mysql
+    restart: unless-stopped
+    volumes:
+      - mysql-db:/bitnami/mysql/data
+    environment:
+      - MYSQL_ROOT_USER=${MYSQL_ROOT_USER}
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+      - MYSQL_USER=${MYSQL_USER}
+      - MYSQL_PASSWORD=${MYSQL_PASSWORD}
+      - MYSQL_AUTHENTICATION_PLUGIN=caching_sha2_password
+      - TZ=${TZ}
+    expose:
+      - 3306
+    networks:
+      - network
+
+volumes:
+  mysql-db:
+
+networks:
+  network:
+    name: network
+    driver: bridge
