@@ -9,6 +9,7 @@ from apiclient.http import MediaFileUpload
 from oauth2client.client import flow_from_clientsecrets
 from oauth2client.file import Storage
 from oauth2client.tools import argparser, run_flow
+from config import launcher_path
 
 httplib2.RETRIES = 1
 
@@ -18,7 +19,7 @@ RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError)
 
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
-CLIENT_SECRETS_FILE = "client_secrets.json"
+CLIENT_SECRETS_FILE = f"{launcher_path}/client_secrets.json"
 
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
 YOUTUBE_API_SERVICE_NAME = "youtube"

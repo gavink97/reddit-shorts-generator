@@ -4,9 +4,10 @@ services:
   shorts:
     image: gavink97/shorts:dev
     container_name: shorts
-    tty: true
     volumes:
       - ${PWD}/pyapp:/pyapp:rw
+      - ${PWD}/pyapp/deps/whisper:/home/user/.cache/whisper:rw
+      - ${PWD}/pyapp/deps/imagemagick/policy.xml:/etc/ImageMagick-6/policy.xml:ro
     environment:
       - TZ=${TZ}
     depends_on:
@@ -28,8 +29,8 @@ services:
       - MYSQL_PASSWORD=${MYSQL_PASSWORD}
       - MYSQL_AUTHENTICATION_PLUGIN=caching_sha2_password
       - TZ=${TZ}
-    expose:
-      - 3306
+    ports:
+      - 3306:3306
     networks:
       - network
 
