@@ -1,11 +1,3 @@
-"""
-`tiktok_uploader` module for uploading videos to TikTok
-
-Key Functions
--------------
-upload_video : Uploads a single TikTok video
-upload_videos : Uploads multiple TikTok videos
-"""
 from os.path import abspath, exists
 from typing import List
 import time
@@ -29,25 +21,7 @@ from tiktok_uploader.proxy_auth_extension.proxy_auth_extension import proxy_is_w
 
 def upload_video(filename=None, description='', cookies='', schedule: datetime.datetime = None, username='',
                  password='', sessionid=None, cookies_list=None, cookies_str=None, proxy=None, *args, **kwargs):
-    """
-    Uploads a single TikTok video.
 
-    Consider using `upload_videos` if using multiple videos
-
-    Parameters
-    ----------
-    filename : str
-        The path to the video to upload
-    description : str
-        The description to set for the video
-    schedule: datetime.datetime
-        The datetime to schedule the video, must be naive or aware with UTC timezone, if naive it will be aware with UTC timezone
-    cookies : str
-        The cookies to use for uploading
-    sessionid: str
-        The `sessionid` is the only required cookie for uploading,
-            but it is recommended to use all cookies to avoid detection
-    """
     auth = AuthBackend(username=username, password=password, cookies=cookies,
                        cookies_list=cookies_list, cookies_str=cookies_str, sessionid=sessionid)
 
@@ -59,47 +33,16 @@ def upload_video(filename=None, description='', cookies='', schedule: datetime.d
         )
 
 
-def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='chrome',
-                  browser_agent=None, on_complete=None, headless=False, num_retires : int = 1, *args, **kwargs):
-    """
-    Uploads multiple videos to TikTok
+def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = None, browser='',
+                  browser_agent=None, on_complete=None, headless=False, num_retries : int = 1, *args, **kwargs):
 
-    Parameters
-    ----------
-    videos : list
-        A list of dictionaries containing the video's ('path') and description ('description')
-    proxy: dict
-        A dictionary containing the proxy user, pass, host and port
-    browser : str
-        The browser to use for uploading
-    browser_agent : selenium.webdriver
-        A selenium webdriver object to use for uploading
-    on_complete : function
-        A function to call when the upload is complete
-    headless : bool
-        Whether or not the browser should be run in headless mode
-    num_retries : int
-        The number of retries to attempt if the upload fails
-    options : SeleniumOptions
-        The options to pass into the browser -> custom privacy settings, etc.
-    *args :
-        Additional arguments to pass into the upload function
-    **kwargs :
-        Additional keyword arguments to pass into the upload function
-
-    Returns
-    -------
-    failed : list
-        A list of videos which failed to upload
-    """
     videos = _convert_videos_dict(videos)
 
     if videos and len(videos) > 1:
         logger.debug("Uploading %d videos", len(videos))
 
-    if not browser_agent: # user-specified browser agent
-        logger.debug('Create a %s browser instance %s', browser,
-                    'in headless mode' if headless else '')
+    if not browser_agent:  # user-specified browser agent
+        logger.debug('Create a %s browser instance %s', browser, 'in headless mode' if headless else '')
         driver = get_browser(name=browser, headless=headless, proxy=proxy, *args, **kwargs)
     else:
         logger.debug('Using user-defined browser agent')
@@ -114,23 +57,20 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
     driver = auth.authenticate_agent(driver)
 
     failed = []
-    # uploads each video
+
     for video in videos:
         try:
             path = abspath(video.get('path'))
             description = video.get('description', '')
             schedule = video.get('schedule', None)
 
-            logger.debug('Posting %s%s', bold(video.get('path')),
-            f'\n{" " * 15}with description: {bold(description)}' if description else '')
+            logger.debug('Posting %s%s', bold(video.get('path')), f'\n{" " * 15}with description: {bold(description)}' if description else '')
 
-            # Video must be of supported type
             if not _check_valid_path(path):
                 print(f'{path} is invalid, skipping')
                 failed.append(video)
                 continue
 
-            # Video must have a valid datetime for tiktok's scheduler
             if schedule:
                 timezone = pytz.UTC
                 if schedule.tzinfo is None:
@@ -150,14 +90,14 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
                     continue
 
             complete_upload_form(driver, path, description, schedule,
-                                 num_retires=num_retires, headless=headless,
+                                 num_retries=num_retries, headless=headless,
                                  *args, **kwargs)
         except Exception as exception:
             logger.error('Failed to upload %s', path)
             logger.error(exception)
             failed.append(video)
 
-        if on_complete is callable: # calls the user-specified on-complete function
+        if on_complete is callable:  # calls the user-specified on-complete function
             on_complete(video)
 
     if config['quit_on_end']:
@@ -167,16 +107,6 @@ def upload_videos(videos: list = None, auth: AuthBackend = None, proxy: dict = N
 
 
 def complete_upload_form(driver, path: str, description: str, schedule: datetime.datetime, headless=False, *args, **kwargs) -> None:
-    """
-    Actually uploads each video
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-        The selenium webdriver to use for uploading
-    path : str
-        The path to the video to upload
-    """
     _go_to_upload(driver)
     #  _remove_cookies_window(driver)
     _set_video(driver, path=path, **kwargs)
@@ -189,70 +119,42 @@ def complete_upload_form(driver, path: str, description: str, schedule: datetime
 
 
 def _go_to_upload(driver) -> None:
-    """
-    Navigates to the upload page, switches to the iframe and waits for it to load
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    """
     logger.debug(green('Navigating to upload page'))
 
-    # if the upload page is not open, navigate to it
     if driver.current_url != config['paths']['upload']:
         driver.get(config['paths']['upload'])
-    # otherwise, refresh the page and accept the reload alert
+
     else:
         _refresh_with_alert(driver)
 
-    # changes to the iframe
     _change_to_upload_iframe(driver)
 
-    # waits for the iframe to load
     root_selector = EC.presence_of_element_located((By.ID, 'root'))
     WebDriverWait(driver, config['explicit_wait']).until(root_selector)
 
-    # Return to default webpage
     driver.switch_to.default_content()
 
-def _change_to_upload_iframe(driver) -> None:
-    """
-    Switch to the iframe of the upload page
 
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    """
+def _change_to_upload_iframe(driver) -> None:
     iframe_selector = EC.presence_of_element_located(
         (By.XPATH, config['selectors']['upload']['iframe'])
         )
     iframe = WebDriverWait(driver, config['explicit_wait']).until(iframe_selector)
     driver.switch_to.frame(iframe)
 
-def _set_description(driver, description: str) -> None:
-    """
-    Sets the description of the video
 
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    description : str
-        The description to set
-    """
+def _set_description(driver, description: str) -> None:
     if description is None:
-        # if no description is provided, filename
         return
 
     logger.debug(green('Setting description'))
 
-    # Remove any characters outside the BMP range (emojis, etc) & Fix accents
     description = description.encode('utf-8', 'ignore').decode('utf-8')
 
-    saved_description = description # save the description in case it fails
+    saved_description = description  # save the description in case it fails
 
     desc = driver.find_element(By.XPATH, config['selectors']['upload']['description'])
 
-    # desc populates with filename before clearing
     WebDriverWait(driver, config['explicit_wait']).until(lambda driver: desc.text != '')
 
     _clear(desc)
@@ -266,7 +168,7 @@ def _set_description(driver, description: str) -> None:
                 desc.send_keys('@' if nearest_mention == 0 else '#')
 
                 name = description[1:].split(' ')[0]
-                if nearest_mention == 0: # @ case
+                if nearest_mention == 0:  # @ case
                     mention_xpath = config['selectors']['upload']['mention_box']
                     condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
                     mention_box = WebDriverWait(driver, config['explicit_wait']).until(condition)
@@ -276,14 +178,13 @@ def _set_description(driver, description: str) -> None:
 
                 time.sleep(config['implicit_wait'])
 
-                if nearest_mention == 0: # @ case
+                if nearest_mention == 0:  # @ case
                     mention_xpath = config['selectors']['upload']['mentions'].format('@' + name)
                     condition = EC.presence_of_element_located((By.XPATH, mention_xpath))
                 else:
                     hashtag_xpath = config['selectors']['upload']['hashtags'].format(name)
                     condition = EC.presence_of_element_located((By.XPATH, hashtag_xpath))
 
-                # if the element never appears (timeout exception) remove the tag and continue
                 try:
                     elem = WebDriverWait(driver, config['implicit_wait']).until(condition)
                 except:
@@ -302,33 +203,14 @@ def _set_description(driver, description: str) -> None:
     except Exception as exception:
         print('Failed to set description: ', exception)
         _clear(desc)
-        desc.send_keys(saved_description) # if fail, use saved description
+        desc.send_keys(saved_description)  # if fail, use saved description
 
 
 def _clear(element) -> None:
-    """
-    Clears the text of the element (an issue with the TikTok website when automating)
-
-    Parameters
-    ----------
-    element
-        The text box to clear
-    """
     element.send_keys(2 * len(element.text) * Keys.BACKSPACE)
 
 
 def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
-    """
-    Sets the video to upload
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    path : str
-        The path to the video to upload
-    num_retries : number of retries (can occasionally fail)
-    """
-    # uploads the element
     logger.debug(green('Uploading video file'))
 
     for _ in range(num_retries):
@@ -338,45 +220,34 @@ def _set_video(driver, path: str = '', num_retries: int = 3, **kwargs) -> None:
                 By.XPATH, config['selectors']['upload']['upload_video']
             )
             upload_box.send_keys(path)
-            # waits for the upload progress bar to disappear
             upload_finished = EC.presence_of_element_located(
                 (By.XPATH, config['selectors']['upload']['upload_finished'])
                 )
 
             WebDriverWait(driver, config['explicit_wait']).until(upload_finished)
-
-            # waits for the video to upload
             upload_confirmation = EC.presence_of_element_located(
                 (By.XPATH, config['selectors']['upload']['upload_confirmation'])
                 )
 
             # An exception throw here means the video failed to upload an a retry is needed
             WebDriverWait(driver, config['explicit_wait']).until(upload_confirmation)
-
             # wait until a non-draggable image is found
-            process_confirmation = EC.presence_of_element_located(
-                (By.XPATH, config['selectors']['upload']['process_confirmation'])
-                )
-            WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
+            # process_confirmation = EC.presence_of_element_located(
+            #     (By.XPATH, config['selectors']['upload']['process_confirmation'])
+            #     )
+            # WebDriverWait(driver, config['explicit_wait']).until(process_confirmation)
             return
         except Exception as exception:
             print(exception)
 
     raise FailedToUpload()
 
+
 def _remove_cookies_window(driver) -> None:
-    """
-    Removes the cookies window if it is open
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    """
-
-    logger.debug(green(f'Removing cookies window'))
+    logger.debug(green('Removing cookies window'))
     cookies_banner = WebDriverWait(driver, config['implicit_wait']).until(
         EC.presence_of_element_located((By.TAG_NAME, config['selectors']['upload']['cookies_banner']['banner'])))
-    
+
     item = WebDriverWait(driver, config['implicit_wait']).until(
         EC.visibility_of(cookies_banner.shadow_root.find_element(By.CSS_SELECTOR, config['selectors']['upload']['cookies_banner']['button'])))
 
@@ -386,40 +257,23 @@ def _remove_cookies_window(driver) -> None:
 
     decline_button.click()
 
-def _remove_split_window(driver) -> None:
-    """
-    Remove the split window if it is open
 
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    """
-    logger.debug(green(f'Removing split window'))
+def _remove_split_window(driver) -> None:
+    logger.debug(green('Removing split window'))
     window_xpath = config['selectors']['upload']['split_window']
-    
+
     try:
         condition = EC.presence_of_element_located((By.XPATH, window_xpath))
         window = WebDriverWait(driver, config['implicit_wait']).until(condition)
         window.click()
-            
+
     except TimeoutException:
-        logger.debug(red(f"Split window not found or operation timed out"))
-        
+        logger.debug(red("Split window not found or operation timed out"))
+    except Exception as e:
+        logger.debug(red("Failed to remove split window"))
+
 
 def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kwargs) -> None:
-    """
-    Sets the interactivity settings of the video
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    comment : bool
-        Whether or not to allow comments
-    stitch : bool
-        Whether or not to allow stitching
-    duet : bool
-        Whether or not to allow duets
-    """
     try:
         logger.debug(green('Setting interactivity settings'))
 
@@ -442,16 +296,6 @@ def _set_interactivity(driver, comment=True, stitch=True, duet=True, *args, **kw
 
 
 def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
-    """
-    Sets the schedule of the video
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    schedule : datetime.datetime
-        The datetime to set
-    """
-
     logger.debug(green('Setting schedule'))
 
     driver_timezone = __get_driver_timezone(driver)
@@ -472,7 +316,6 @@ def _set_schedule_video(driver, schedule: datetime.datetime) -> None:
         print(msg)
         logger.error(msg)
         raise FailedToUpload()
-
 
 
 def __date_picker(driver, month: int, day: int) -> None:
@@ -577,13 +420,6 @@ def __verify_time_picked_is_correct(driver, hour: int, minute: int):
 
 
 def _post_video(driver) -> None:
-    """
-    Posts the video by clicking the post button
-
-    Parameters
-    ----------
-    driver : selenium.webdriver
-    """
     logger.debug(green('Clicking the post button'))
 
     try:
@@ -593,16 +429,20 @@ def _post_video(driver) -> None:
         logger.debug(green("Trying to click on the button again"))
         driver.execute_script('document.querySelector(".btn-post > button").click()')
 
-    # waits for the video to upload
+    try:
+        manage_your_post = WebDriverWait(driver, config['implicit_wait']).until(EC.element_to_be_clickable((By.XPATH, '/html/body/div[1]/div/div/div/div[2]/div[2]/div[1]/div[9]/div/div[2]/div[2]')))
+        manage_your_post.click()
+    except ElementClickInterceptedException:
+        logger.debug(green("Trying to click on the button again"))
+        driver.execute_script('document.querySelector(".btn-post > button").click()')
+
     post_confirmation = EC.presence_of_element_located(
-        (By.XPATH, config['selectors']['upload']['post_confirmation'])
+        (By.XPATH, '//*[@id="root"]/div[2]/div[2]/div/div/div[1]/span/span')
         )
     WebDriverWait(driver, config['explicit_wait']).until(post_confirmation)
 
     logger.debug(green('Video posted successfully'))
 
-
-# HELPERS
 
 def _check_valid_path(path: str) -> bool:
     """
@@ -639,9 +479,6 @@ def _set_valid_schedule_minute(schedule, valid_multiple) -> datetime.datetime:
 
 
 def _check_valid_schedule(schedule: datetime.datetime) -> bool:
-    """
-    Returns if the schedule is supported by TikTok
-    """
     valid_tiktok_minute_multiple = 5
     margin_to_complete_upload_form = 5
 
@@ -659,21 +496,6 @@ def _check_valid_schedule(schedule: datetime.datetime) -> bool:
 
 
 def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: str) -> int:
-    """
-    Returns the index to splice the description at
-
-    Parameters
-    ----------
-    nearest_mention : int
-        The index of the nearest mention
-    nearest_hashtag : int
-        The index of the nearest hashtag
-
-    Returns
-    -------
-    int
-        The index to splice the description at
-    """
     if nearest_mention == -1 and nearest_hashtag == -1:
         return len(description)
     elif nearest_hashtag == -1:
@@ -683,12 +505,8 @@ def _get_splice_index(nearest_mention: int, nearest_hashtag: int, description: s
     else:
         return min(nearest_mention, nearest_hashtag)
 
-def _convert_videos_dict(videos_list_of_dictionaries) -> List:
-    """
-    Takes in a videos dictionary and converts it.
 
-    This allows the user to use the wrong stuff and thing to just work
-    """
+def _convert_videos_dict(videos_list_of_dictionaries) -> List:
     if not videos_list_of_dictionaries:
         raise RuntimeError("No videos to upload")
 
@@ -699,12 +517,10 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
     correct_description = valid_description[0]
 
     def intersection(lst1, lst2):
-        """ return the intersection of two lists """
         return list(set(lst1) & set(lst2))
 
     return_list = []
     for elem in videos_list_of_dictionaries:
-        # preprocess the dictionary
         elem = {k.strip().lower(): v for k, v in elem.items()}
 
         keys = elem.keys()
@@ -712,7 +528,6 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
         description_intersection = intersection(valid_description, keys)
 
         if path_intersection:
-            # we have a path
             path = elem[path_intersection.pop()]
 
             if not _check_valid_path(path):
@@ -720,30 +535,27 @@ def _convert_videos_dict(videos_list_of_dictionaries) -> List:
 
             elem[correct_path] = path
         else:
-            # iterates over the elem and find a key which is a path with a valid extension
             for _, value in elem.items():
                 if _check_valid_path(value):
                     elem[correct_path] = value
                     break
             else:
-                # no valid path found
                 raise RuntimeError("Path not found in dictionary: " + str(elem))
 
         if description_intersection:
-            # we have a description
             elem[correct_description] = elem[description_intersection.pop()]
         else:
-            # iterates over the elem and finds a description which is not a valid path
             for _, value in elem.items():
                 if not _check_valid_path(value):
                     elem[correct_description] = value
                     break
             else:
-                elem[correct_description] = '' # null description is fine
+                elem[correct_description] = ''  # null description is fine
 
         return_list.append(elem)
 
     return return_list
+
 
 def __get_driver_timezone(driver) -> pytz.timezone:
     """
@@ -752,9 +564,9 @@ def __get_driver_timezone(driver) -> pytz.timezone:
     timezone_str = driver.execute_script("return Intl.DateTimeFormat().resolvedOptions().timeZone")
     return pytz.timezone(timezone_str)
 
+
 def _refresh_with_alert(driver) -> None:
     try:
-        # attempt to refresh the page
         driver.refresh()
 
         # wait for the alert to appear
@@ -763,22 +575,14 @@ def _refresh_with_alert(driver) -> None:
         # accept the alert
         driver.switch_to.alert.accept()
     except:
-        # if no alert appears, the page is fine
         pass
 
-class DescriptionTooLong(Exception):
-    """
-    A video description longer than the maximum allowed by TikTok's website (not app) uploader
-    """
 
+class DescriptionTooLong(Exception):
     def __init__(self, message=None):
         super().__init__(message or self.__doc__)
 
 
 class FailedToUpload(Exception):
-    """
-    A video failed to upload
-    """
-
     def __init__(self, message=None):
         super().__init__(message or self.__doc__)

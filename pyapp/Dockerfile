@@ -32,9 +32,13 @@ WORKDIR $STARTUPDIR
 COPY cronjob /etc/cron.d/shorts-cron
 
 RUN : \
+&& useradd --uid 1000 1000 \
 && chmod 0644 /etc/cron.d/shorts-cron \
 && crontab /etc/cron.d/shorts-cron \
+&& crontab -u 1000 /etc/cron.d/shorts-cron \
+&& chmod u+s /usr/sbin/cron \
 && touch /var/log/cron.log \
+&& chmod u+rwx /var/log/cron.log \
 && chown 1000:0 $HOME \
 && :
 
@@ -44,7 +48,7 @@ WORKDIR $HOME
 
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
-# USER 1000
+USER 1000
 
 WORKDIR /usr/src/app
 

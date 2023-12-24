@@ -1,5 +1,9 @@
 import datetime
+import os
+
 from moviepy.editor import VideoFileClip
+
+from config import launcher_path
 
 
 def split_string_at_space(text, index):
@@ -56,3 +60,27 @@ def check_video_fps(footage: []):
 
         if rate != 30:
             check_fps.write_videofile(video, fps=30)
+
+
+def tts_for_platform(platform):
+    if platform == "youtube":
+        platform_tts_path = os.path.join(launcher_path, "youtube_tts.txt")
+
+        try:
+            with open(platform_tts_path, 'r') as file:
+                platform_tts = file.read()
+
+        except FileNotFoundError:
+            print(f"File {platform_tts_path} not found.")
+
+    elif platform == "tiktok":
+        platform_tts_path = os.path.join(launcher_path, "tiktok_tts.txt")
+
+        try:
+            with open(platform_tts_path, 'r') as file:
+                platform_tts = file.read()
+
+        except FileNotFoundError:
+            print(f"File {platform_tts_path} not found.")
+
+    return (platform_tts_path, platform_tts)

@@ -1,7 +1,3 @@
-"""
-CLI is a controller for the command line use of this library
-"""
-
 from argparse import ArgumentParser
 from os.path import exists, join
 import datetime
@@ -10,19 +6,15 @@ import json
 from tiktok_uploader.upload import upload_video
 from tiktok_uploader.auth import login_accounts, save_cookies
 
+
 def main():
-    """
-    Passes arguments into the program
-    """
     args = get_uploader_args()
 
     args = validate_uploader_args(args=args)
 
-    # parse args
     schedule = parse_schedule(args.schedule)
     proxy = parse_proxy(args.proxy)
 
-    # runs the program using the arguments provided
     result = upload_video(
         filename=args.video,
         description=args.description,
@@ -44,9 +36,6 @@ def main():
 
 
 def get_uploader_args():
-    """
-    Generates a parser which is used to get all of the video's information
-    """
     parser = ArgumentParser(
         description='TikTok uploader is a video uploader which can upload a' +
         'video from your computer to the TikTok using selenium automation'
@@ -75,15 +64,9 @@ def get_uploader_args():
 
 
 def validate_uploader_args(args: dict):
-    """
-    Preforms validation on each input given
-    """
-
-    # Makes sure the video file exists
     if not exists(args.video):
         raise FileNotFoundError(f'Could not find the video file at {args["video"]}')
 
-    # User can not pass in both cookies and username / password
     if args.cookies and (args.username or args.password):
         raise ValueError('You can not pass in both cookies and username / password')
 
@@ -91,13 +74,9 @@ def validate_uploader_args(args: dict):
 
 
 def auth():
-    """
-    Authenticates the user
-    """
     args = get_auth_args()
     args = validate_auth_args(args=args)
 
-    # runs the program using the arguments provided
     if args.input:
         login_info = get_login_info(path=args.input, header=args.header)
     else:
@@ -110,14 +89,10 @@ def auth():
 
 
 def get_auth_args():
-    """
-    Generates a parser which is used to get all of the authentication information
-    """
     parser = ArgumentParser(
         description='TikTok Auth is a program which can log you into multiple accounts sequentially'
     )
 
-    # authentication arguments
     parser.add_argument('-o', '--output', default='tmp',
                         help='The output folder to save the cookies to')
     parser.add_argument('-i', '--input', help='A csv file with username and password')
@@ -128,11 +103,8 @@ def get_auth_args():
 
     return parser.parse_args()
 
+
 def validate_auth_args(args):
-    """
-    Preforms validation on each input given
-    """
-    # username and password or input files are mutually exclusive
     if (args['username'] and args['password']) and args['input']:
         raise ValueError('You can not pass in both username / password and input file')
 
@@ -140,9 +112,6 @@ def validate_auth_args(args):
 
 
 def get_login_info(path: str, header=True) -> list:
-    """
-    Parses the input file into a list of usernames and passwords
-    """
     with open(path, 'r', encoding='utf-8') as file:
         file = file.readlines()
         if header:

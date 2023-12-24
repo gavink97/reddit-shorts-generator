@@ -11,13 +11,14 @@ from moviepy.video.fx.fadeout import fadeout
 from config import launcher_path
 
 
-def create_short_video(footage: [], music: [], submission_author, submission_text, narrator_title_track, narrator_content_track, commentor_track, youtube_track):
+def create_short_video(footage: [], music: [], submission_author, submission_text, narrator_title_track, narrator_content_track, commentor_track, platform_tts_track):
     # add definition to take submission_type into account
     # rewrite into smaller functions
     # fix bug with whisper not always giving subtitles
+    # stylize subtitles
     # fix ffmpeg bug on tts
     submission_image = f"{launcher_path}/temp/images/{submission_author}.png"
-    short_file_path = f"{launcher_path}/temp/uploads/youtube/{submission_author}.mp4"
+    short_file_path = f"{launcher_path}/temp/uploads/{submission_author}.mp4"
     tts_combined = f"{launcher_path}/temp/ttsoutput/combined.mp3"
 
     random_video = random.choice(footage)
@@ -29,7 +30,7 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
     if submission_text == "":
         narrator_audio = AudioFileClip(narrator_title_track)
         commentor_audio = AudioFileClip(commentor_track)
-        youtube_audio = AudioFileClip(youtube_track)
+        platform_tts_audio = AudioFileClip(platform_tts_track)
 
         narrator_audio.set_start(0.35)
         narrator_audio.set_end(narrator_audio.duration - 0.35)
@@ -38,17 +39,17 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
         commentor_audio.set_end(commentor_audio.duration - 0.35)
         commentor_audio_adjusted = volumex(commentor_audio, 1.4)
 
-        youtube_audio.set_start(0.35)
-        youtube_audio.set_end(youtube_audio.duration - 0.35)
-        youtube_audio_adjusted = volumex(youtube_audio, 1.5)
+        platform_tts_audio.set_start(0.35)
+        platform_tts_audio.set_end(platform_tts_audio.duration - 0.35)
+        platform_tts_audio_adjusted = volumex(platform_tts_audio, 1.5)
 
         space_between_tts = 1
 
         narrator_audio_duration = math.floor(narrator_audio.duration + space_between_tts)
         commentor_audio_duration = math.floor(commentor_audio.duration + space_between_tts)
-        youtube_audio_duration = math.floor(youtube_audio.duration)
+        platform_tts_audio_duration = math.floor(platform_tts_audio.duration)
 
-        soundduration = narrator_audio_duration + commentor_audio_duration + youtube_audio_duration + 2
+        soundduration = narrator_audio_duration + commentor_audio_duration + platform_tts_audio_duration + 2
         calculating_random_video_duration = VideoFileClip(random_video)  # can probably refactor this
         resource_video_duration = math.floor(calculating_random_video_duration.duration)
 
@@ -60,12 +61,12 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
 
         tracks_mixed = CompositeAudioClip([narrator_audio,
                                            commentor_audio_adjusted.set_start(narrator_audio_duration),
-                                           youtube_audio_adjusted.set_start(narrator_audio_duration + commentor_audio_duration),
+                                           platform_tts_audio_adjusted.set_start(narrator_audio_duration + commentor_audio_duration),
                                            music_track_faded])
 
         tts_only = CompositeAudioClip([narrator_audio,
                                        commentor_audio_adjusted.set_start(narrator_audio_duration),
-                                       youtube_audio_adjusted.set_start(narrator_audio_duration + commentor_audio_duration)])
+                                       platform_tts_audio_adjusted.set_start(narrator_audio_duration + commentor_audio_duration)])
 
         reddit_image = ImageClip(submission_image).set_duration(narrator_audio_duration)
 
@@ -73,7 +74,7 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
         narrator_title_audio = AudioFileClip(narrator_title_track)
         narrator_content_audio = AudioFileClip(narrator_content_track)
         commentor_audio = AudioFileClip(commentor_track)
-        youtube_audio = AudioFileClip(youtube_track)
+        platform_tts_audio = AudioFileClip(platform_tts_track)
 
         narrator_title_audio.set_start(0.35)
         narrator_title_audio.set_end(narrator_title_audio.duration - 0.35)
@@ -85,18 +86,18 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
         commentor_audio.set_end(commentor_audio.duration - 0.35)
         commentor_audio_adjusted = volumex(commentor_audio, 1.4)
 
-        youtube_audio.set_start(0.35)
-        youtube_audio.set_end(youtube_audio.duration - 0.35)
-        youtube_audio_adjusted = volumex(youtube_audio, 1.5)
+        platform_tts_audio.set_start(0.35)
+        platform_tts_audio.set_end(platform_tts_audio.duration - 0.35)
+        platform_tts_audio_adjusted = volumex(platform_tts_audio, 1.5)
 
         space_between_tts = 1
 
         narrator_title_audio_duration = math.floor(narrator_title_audio.duration + space_between_tts)
         narrator_content_audio_duration = math.floor(narrator_content_audio.duration + space_between_tts)
         commentor_audio_duration = math.floor(commentor_audio.duration + space_between_tts)
-        youtube_audio_duration = math.floor(youtube_audio.duration)
+        platform_tts_audio_duration = math.floor(platform_tts_audio.duration)
 
-        soundduration = narrator_title_audio_duration + narrator_content_audio_duration + commentor_audio_duration + youtube_audio_duration + 3
+        soundduration = narrator_title_audio_duration + narrator_content_audio_duration + commentor_audio_duration + platform_tts_audio_duration + 3
         calculating_random_video_duration = VideoFileClip(random_video)
         resource_video_duration = math.floor(calculating_random_video_duration.duration)
 
@@ -109,13 +110,13 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
         tracks_mixed = CompositeAudioClip([narrator_title_audio,
                                            narrator_content_audio.set_start(narrator_title_audio_duration),
                                            commentor_audio_adjusted.set_start(narrator_title_audio_duration + narrator_content_audio_duration),
-                                           youtube_audio_adjusted.set_start(narrator_title_audio_duration + narrator_content_audio_duration + commentor_audio_duration),
+                                           platform_tts_audio_adjusted.set_start(narrator_title_audio_duration + narrator_content_audio_duration + commentor_audio_duration),
                                            music_track_faded])
 
         tts_only = CompositeAudioClip([narrator_title_audio,
                                        narrator_content_audio.set_start(narrator_title_audio_duration),
                                        commentor_audio_adjusted.set_start(narrator_title_audio_duration + narrator_content_audio_duration),
-                                       youtube_audio_adjusted.set_start(narrator_title_audio_duration + narrator_content_audio_duration + commentor_audio_duration)])
+                                       platform_tts_audio_adjusted.set_start(narrator_title_audio_duration + narrator_content_audio_duration + commentor_audio_duration)])
 
         reddit_image = ImageClip(submission_image).set_duration(narrator_title_audio_duration)
 
@@ -161,8 +162,8 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
     if os.path.exists(commentor_track):
         os.remove(commentor_track)
 
-    if os.path.exists(youtube_track):
-        os.remove(youtube_track)
+    if os.path.exists(platform_tts_track):
+        os.remove(platform_tts_track)
 
     if os.path.exists(tts_combined):
         os.remove(tts_combined)

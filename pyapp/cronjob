@@ -1,3 +1,4 @@
 # must be ended with a new line "LF" (Unix) and not "CRLF" (Windows)
-1 */2 * * * /usr/local/bin/python3 -u /pyapp/main.py >> /var/log/cron.log 2>&1
-# An empty line is required at the end of this file for a valid cron file.
+0 */2 * * * /usr/local/bin/python3 -u /pyapp/main.py -p youtube >> /var/log/cron.log 2>&1
+0 */4 * * * /usr/local/bin/python3 -u /pyapp/main.py -p tiktok >> /var/log/cron.log 2>&1
+# MUST REBUILD DOCKER IMAGE IF CHANGES ARE MADE TO THE SCHEDULE

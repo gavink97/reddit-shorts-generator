@@ -1,5 +1,6 @@
 import datetime
 from PIL import Image, ImageFont, ImageDraw
+
 from config import launcher_path
 from scripts.minor_operations import split_string_at_space, abbreviate_number, format_relative_time
 

@@ -28,8 +28,10 @@ def identify_submission_type():
     submission_is_self = submission.is_self
     submission_text = submission.selftext
     submission_url = submission.url
+    submission_id = submission.id
 
     print(submission_author)
+    print(submission_id)
     print(submission_title)
     identified_post = identify_post_type(submission_is_self, submission_text, submission_url)
     print(identified_post.kind)
