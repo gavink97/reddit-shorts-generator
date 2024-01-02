@@ -6,6 +6,8 @@ services:
     container_name: shorts
     volumes:
       - ${PWD}/pyapp:/pyapp:rw
+      - ${PWD}/pyapp/scripts/tiktok-uploader:/home/default/src/tiktok-uploader:ro
+      - ${PWD}/pyapp/deps/whisper:/root/.cache/whisper:rw
       - ${PWD}/pyapp/deps/whisper:/home/user/.cache/whisper:rw
       - ${PWD}/pyapp/deps/imagemagick/policy.xml:/etc/ImageMagick-6/policy.xml:ro
     environment:

@@ -21,10 +21,18 @@ RUN : \
 && apt update \
 && apt install -y -o Debug::pkgProblemResolver=1 libpng-dev libjpeg-dev libtiff-dev libmagick++-dev \
 && apt update \
-&& apt install -y -o Debug::pkgProblemResolver=1 firefox-esr imagemagick ffmpeg bash cron \
+&& apt install -y -o Debug::pkgProblemResolver=1 firefox-esr imagemagick ffmpeg bash cron python3-dotenv \
 && echo "deb http://deb.debian.org/debian bookworm contrib non-free" > /etc/apt/sources.list.d/contrib.list \
 && apt update \
 && apt install -y -o Debug::pkgProblemResolver=1 ttf-mscorefonts-installer \
+&& :
+
+COPY --link requirements.txt .
+# For some reason install pip as non root user makes dotenv module not load
+# fix message pip install pygobject
+RUN : \
+&& pip install --verbose wheel setuptools pip --upgrade \
+&& pip install --verbose --no-cache-dir -r requirements.txt \
 && :
 
 WORKDIR $STARTUPDIR
@@ -49,16 +57,6 @@ WORKDIR $HOME
 RUN mkdir -p $HOME && chown -R 1000:0 $HOME
 
 USER 1000
-
-WORKDIR /usr/src/app
-
-COPY --chown=1000:1000 --link requirements.txt .
-
-# fix message pip install pygobject
-RUN : \
-&& pip install --verbose wheel setuptools pip --upgrade \
-&& pip install --verbose --no-cache-dir -r requirements.txt \
-&& :
 
 # ENTRYPOINT /usr/local/bin/python3 -u /pyapp/main.py
 CMD cron && tail -f /var/log/cron.log

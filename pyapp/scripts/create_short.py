@@ -3,29 +3,33 @@ import whisper_timestamped
 import moviepy.video.fx.all as vfx
 import math
 import random
+
 from moviepy.editor import CompositeVideoClip, CompositeAudioClip, TextClip, AudioFileClip, VideoFileClip, ImageClip
 from moviepy.audio.fx.volumex import volumex
 from moviepy.audio.fx.all import audio_fadeout
 from moviepy.video.fx.resize import resize
 from moviepy.video.fx.fadeout import fadeout
+
 from config import launcher_path
+from scripts.minor_operations import random_choice_music
 
 
-def create_short_video(footage: [], music: [], submission_author, submission_text, narrator_title_track, narrator_content_track, commentor_track, platform_tts_track):
-    # add definition to take submission_type into account
+def create_short_video(footage: [], music: [], submission_author, submission_text, narrator_title_track, narrator_content_track, commentor_track, platform_tts_track, subreddit_music_type):
     # rewrite into smaller functions
     # fix bug with whisper not always giving subtitles
-    # stylize subtitles
     # fix ffmpeg bug on tts
+    # migrate to ffmpeg-python (maybe)
     submission_image = f"{launcher_path}/temp/images/{submission_author}.png"
     short_file_path = f"{launcher_path}/temp/uploads/{submission_author}.mp4"
     tts_combined = f"{launcher_path}/temp/ttsoutput/combined.mp3"
 
     random_video = random.choice(footage)
-    resource_music = random.choice(music)
+    # resource_music_link, resource_music_volume, resource_music_type = random.choice(music)
 
-    # add gaussian blur effect to beginning of the video
-    # style the subtitles better
+    resource_music_link, resource_music_volume = random_choice_music(music, subreddit_music_type)
+
+    # resource_music_link = music[0][0]
+    # resource_music_volume = music[0][1]
 
     if submission_text == "":
         narrator_audio = AudioFileClip(narrator_title_track)
@@ -55,8 +59,8 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
 
         point = random.randint(0, resource_video_duration - soundduration)
 
-        music_track = AudioFileClip(resource_music).subclip(0, soundduration)
-        music_track_adjusted = volumex(music_track, 0.3)
+        music_track = AudioFileClip(resource_music_link).subclip(0, soundduration)
+        music_track_adjusted = volumex(music_track, resource_music_volume)
         music_track_faded = audio_fadeout(music_track_adjusted, 5)
 
         tracks_mixed = CompositeAudioClip([narrator_audio,
@@ -103,8 +107,8 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
 
         point = random.randint(0, resource_video_duration - soundduration)
 
-        music_track = AudioFileClip(resource_music).subclip(0, soundduration)
-        music_track_adjusted = volumex(music_track, 0.3)
+        music_track = AudioFileClip(resource_music_link).subclip(0, soundduration)
+        music_track_adjusted = volumex(music_track, resource_music_volume)
         music_track_faded = audio_fadeout(music_track_adjusted, 5)
 
         tracks_mixed = CompositeAudioClip([narrator_title_audio,
@@ -138,6 +142,7 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
     subtitles.append(resource_video_clipped)
     subtitles.append(channel_watermark)
     subtitles.append(reddit_image_resized)
+    font = "arialbd.ttf"
 
     for segment in track_mixed_transcribed["segments"]:
         for word in segment["words"]:
@@ -145,8 +150,12 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
             subtitle_start = word["start"]
             subtitle_end = word["end"]
             subtitle_duration = subtitle_end - subtitle_start
-            subtitle_track = TextClip(txt=subtitle_text, fontsize=50, font="Helvetica-Bold", color="white")
+            subtitle_track = TextClip(txt=subtitle_text, fontsize=50, font=font, color="white")
             subtitle_track = subtitle_track.set_start(subtitle_start).set_duration(subtitle_duration).set_pos(("center", 550))
+            subtitle_track_stroke = TextClip(txt=subtitle_text, fontsize=50, font=font, color="black", stroke_width=5, stroke_color="black")
+            subtitle_track_stroke = subtitle_track_stroke.set_start(subtitle_start).set_duration(subtitle_duration).set_pos(("center", 548))
+
+            subtitles.append(subtitle_track_stroke)
             subtitles.append(subtitle_track)
 
     resource_video_clipped = CompositeVideoClip(subtitles)

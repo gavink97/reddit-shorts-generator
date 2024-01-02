@@ -1,17 +1,31 @@
 import datetime
+import os
+
 from PIL import Image, ImageFont, ImageDraw
 
 from config import launcher_path
 from scripts.minor_operations import split_string_at_space, abbreviate_number, format_relative_time
+# from minor_operations import split_string_at_space, abbreviate_number, format_relative_time
+
+
+# test values
+# launcher_path = "/Users/gavinkondrath/projects/youtube_shorts/pyapp"
+# submission_author = "gavink"
+# submission_title = "This is a test"
+# subreddit = "askreddit"
+# submission_timestamp = 1703679574
+# submission_score = 1
+# submission_comments_int = 0
 
 
 def generate_reddit_story_image(submission_author, submission_title, subreddit, submission_timestamp, submission_score, submission_comments_int):
     # add flair
-    # fix spacing on number for comments and likes based on characters
+    subreddit_lowercase = subreddit.lower()
 
     story_template = Image.open(f"{launcher_path}/resources/images/reddit_submission_template.png")
     submission_image = f"{launcher_path}/temp/images/{submission_author}.png"
-    community_logo_path = f"{launcher_path}/resources/images/subreddits/{subreddit}.png"
+    community_logo_path = f"{launcher_path}/resources/images/subreddits/{subreddit_lowercase}.png"
+    default_community_logo_path = f"{launcher_path}/resources/images/subreddits/default.png"
 
     if len(str(submission_author)) > 22:
         submission_author_formatted = str(submission_author)[:22]
@@ -49,8 +63,13 @@ def generate_reddit_story_image(submission_author, submission_title, subreddit, 
     twenty_pt_reg = ImageFont.truetype("arial.ttf", 82)
     twenty_six_pt_bold = ImageFont.truetype("arialbd.ttf", 110)
 
-    community_logo = Image.open(community_logo_path)
-    community_logo = community_logo.resize((244, 244))
+    if os.path.exists(community_logo_path):
+        community_logo = Image.open(community_logo_path)
+        community_logo = community_logo.resize((244, 244))
+
+    else:
+        community_logo = Image.open(default_community_logo_path)
+        community_logo = community_logo.resize((244, 244))
 
     story_template.paste(community_logo, (222, 368), mask=community_logo)
 
@@ -66,8 +85,24 @@ def generate_reddit_story_image(submission_author, submission_title, subreddit, 
 
     draw.multiline_text((236, 672), submission_title_formatted, (35, 31, 32,), font=twenty_six_pt_bold, spacing=43.5)
 
-    draw.text((460, 1253), submission_score_formatted, (35, 31, 32,), font=twenty_pt_bold)
+    if len(submission_score_formatted) < 4:
+        offset_needed = 4 - len(submission_score_formatted)
+        score_offset = offset_needed * 22
 
-    draw.text((1172, 1253), submission_comments_formatted, (35, 31, 32,), font=twenty_pt_bold)
+        draw.text((460+score_offset, 1253), submission_score_formatted, (35, 31, 32,), font=twenty_pt_bold)
+
+    else:
+        draw.text((460, 1253), submission_score_formatted, (35, 31, 32,), font=twenty_pt_bold)
+
+    if len(submission_comments_formatted) < 4:
+        offset_needed = 4 - len(submission_comments_formatted)
+        comments_offset = offset_needed * 24
+
+        draw.text((1172+comments_offset, 1253), submission_comments_formatted, (35, 31, 32,), font=twenty_pt_bold)
+
+    else:
+        draw.text((1172, 1253), submission_comments_formatted, (35, 31, 32,), font=twenty_pt_bold)
 
     story_template.save(submission_image)
+
+    # story_template.show()

@@ -13,10 +13,8 @@ tiktok_session_id = os.environ['TIKTOK_SESSION_ID_TTS']
 
 
 def generate_tiktok_tts(submission_title, submission_author, submission_text, top_comment_body, top_comment_author, platform_tts_path, platform_tts):
-    # try using other TTSs to see if there are better results
-
-    tiktok_narrator = "en_us_001"
-    tiktok_commentor = "en_us_006"
+    tiktok_narrator = "en_male_narration"
+    tiktok_commentor = "en_us_009"
     my_tts = "en_us_007"
 
     tts_character_limit = 200
@@ -49,6 +47,9 @@ def generate_tiktok_tts(submission_title, submission_author, submission_text, to
             req_text=submission_title, filename=narrator_title_track)
 
     # Submission Text TTS
+    if submission_text == " ":
+        submission_text.strip()
+
     if submission_text != "":
         if len(submission_text) > tts_character_limit:
             tts(session_id=tiktok_session_id, text_speaker=tiktok_narrator,

@@ -26,7 +26,7 @@ def identify_post_type(submission_is_self, submission_text, submission_url):
     image_extensions = ['.jpg', '.jpeg', '.png', '.gif']
     video_extensions = ['.mp4', '.avi', '.mov']
     reddit_image_extensions = ['https://www.reddit.com/gallery/', 'https://i.redd.it/']
-    reddit_video_extensions = ['https://v.redd.it/', 'https://youtube.com']
+    reddit_video_extensions = ['https://v.redd.it/', 'https://youtube.com', 'https://youtu.be']
 
     if submission_is_self is True:
 
