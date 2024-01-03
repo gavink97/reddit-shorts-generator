@@ -6,7 +6,7 @@ import random
 
 from moviepy.editor import CompositeVideoClip, CompositeAudioClip, TextClip, AudioFileClip, VideoFileClip, ImageClip
 from moviepy.audio.fx.volumex import volumex
-from moviepy.audio.fx.all import audio_fadeout
+from moviepy.audio.fx.all import audio_fadeout, audio_loop
 from moviepy.video.fx.resize import resize
 from moviepy.video.fx.fadeout import fadeout
 
@@ -17,8 +17,6 @@ from scripts.minor_operations import random_choice_music
 def create_short_video(footage: [], music: [], submission_author, submission_text, narrator_title_track, narrator_content_track, commentor_track, platform_tts_track, subreddit_music_type):
     # rewrite into smaller functions
     # fix bug with whisper not always giving subtitles
-    # fix ffmpeg bug on tts
-    # migrate to ffmpeg-python (maybe)
     submission_image = f"{launcher_path}/temp/images/{submission_author}.png"
     short_file_path = f"{launcher_path}/temp/uploads/{submission_author}.mp4"
     tts_combined = f"{launcher_path}/temp/ttsoutput/combined.mp3"
@@ -36,15 +34,18 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
         commentor_audio = AudioFileClip(commentor_track)
         platform_tts_audio = AudioFileClip(platform_tts_track)
 
-        narrator_audio.set_start(0.35)
-        narrator_audio.set_end(narrator_audio.duration - 0.35)
+        # narrator_audio.set_start(0.35)
+        # narrator_audio.set_end(narrator_audio.duration - 0.35)
+        narrator_audio = narrator_audio.subclip(0, narrator_audio.duration - 0.1)
 
-        commentor_audio.set_start(0.35)
-        commentor_audio.set_end(commentor_audio.duration - 0.35)
+        # commentor_audio.set_start(0.35)
+        # commentor_audio.set_end(commentor_audio.duration - 0.35)
+        commentor_audio = commentor_audio.subclip(0, commentor_audio.duration - 0.1)
         commentor_audio_adjusted = volumex(commentor_audio, 1.4)
 
-        platform_tts_audio.set_start(0.35)
-        platform_tts_audio.set_end(platform_tts_audio.duration - 0.35)
+        # platform_tts_audio.set_start(0.35)
+        # platform_tts_audio.set_end(platform_tts_audio.duration - 0.35)
+        platform_tts_audio = platform_tts_audio.subclip(0, platform_tts_audio.duration - 0.1)
         platform_tts_audio_adjusted = volumex(platform_tts_audio, 1.5)
 
         space_between_tts = 1
@@ -59,9 +60,19 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
 
         point = random.randint(0, resource_video_duration - soundduration)
 
-        music_track = AudioFileClip(resource_music_link).subclip(0, soundduration)
-        music_track_adjusted = volumex(music_track, resource_music_volume)
-        music_track_faded = audio_fadeout(music_track_adjusted, 5)
+        music_track = AudioFileClip(resource_music_link)
+        music_duration = music_track.duration
+
+        if music_duration < soundduration:
+            looped_music_track = audio_loop(music_track, duration=soundduration)
+            music_track_looped = looped_music_track.subclip(0, soundduration)
+            music_track_adjusted = volumex(music_track_looped, resource_music_volume)
+            music_track_faded = audio_fadeout(music_track_adjusted, 5)
+
+        else:
+            music_track = AudioFileClip(resource_music_link).subclip(0, soundduration)
+            music_track_adjusted = volumex(music_track, resource_music_volume)
+            music_track_faded = audio_fadeout(music_track_adjusted, 5)
 
         tracks_mixed = CompositeAudioClip([narrator_audio,
                                            commentor_audio_adjusted.set_start(narrator_audio_duration),
@@ -80,18 +91,22 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
         commentor_audio = AudioFileClip(commentor_track)
         platform_tts_audio = AudioFileClip(platform_tts_track)
 
-        narrator_title_audio.set_start(0.35)
-        narrator_title_audio.set_end(narrator_title_audio.duration - 0.35)
+        # narrator_title_audio.set_start(0.35)
+        # narrator_title_audio.set_end(narrator_title_audio.duration - 0.35)
+        narrator_title_audio = narrator_title_audio.subclip(0, narrator_title_audio.duration - 0.1)
 
-        narrator_content_audio.set_start(0.35)
-        narrator_content_audio.set_end(narrator_content_audio.duration - 0.35)
+        # narrator_content_audio.set_start(0.35)
+        # narrator_content_audio.set_end(narrator_content_audio.duration - 0.35)
+        narrator_content_audio = narrator_content_audio.subclip(0, narrator_content_audio.duration - 0.1)
 
-        commentor_audio.set_start(0.35)
-        commentor_audio.set_end(commentor_audio.duration - 0.35)
+        # commentor_audio.set_start(0.35)
+        # commentor_audio.set_end(commentor_audio.duration - 0.35)
+        commentor_audio = commentor_audio.subclip(0, commentor_audio.duration - 0.1)
         commentor_audio_adjusted = volumex(commentor_audio, 1.4)
 
-        platform_tts_audio.set_start(0.35)
-        platform_tts_audio.set_end(platform_tts_audio.duration - 0.35)
+        # platform_tts_audio.set_start(0.35)
+        # platform_tts_audio.set_end(platform_tts_audio.duration - 0.35)
+        platform_tts_audio = platform_tts_audio.subclip(0, platform_tts_audio.duration - 0.1)
         platform_tts_audio_adjusted = volumex(platform_tts_audio, 1.5)
 
         space_between_tts = 1
@@ -107,9 +122,19 @@ def create_short_video(footage: [], music: [], submission_author, submission_tex
 
         point = random.randint(0, resource_video_duration - soundduration)
 
-        music_track = AudioFileClip(resource_music_link).subclip(0, soundduration)
-        music_track_adjusted = volumex(music_track, resource_music_volume)
-        music_track_faded = audio_fadeout(music_track_adjusted, 5)
+        music_track = AudioFileClip(resource_music_link)
+        music_duration = music_track.duration
+
+        if music_duration < soundduration:
+            looped_music_track = audio_loop(music_track, duration=soundduration)
+            music_track_looped = looped_music_track.subclip(0, soundduration)
+            music_track_adjusted = volumex(music_track_looped, resource_music_volume)
+            music_track_faded = audio_fadeout(music_track_adjusted, 5)
+
+        else:
+            music_track = AudioFileClip(resource_music_link).subclip(0, soundduration)
+            music_track_adjusted = volumex(music_track, resource_music_volume)
+            music_track_faded = audio_fadeout(music_track_adjusted, 5)
 
         tracks_mixed = CompositeAudioClip([narrator_title_audio,
                                            narrator_content_audio.set_start(narrator_title_audio_duration),

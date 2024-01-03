@@ -2,6 +2,7 @@ import os
 import praw
 import random
 import time
+import re
 
 from dotenv import load_dotenv
 from praw.models import MoreComments
@@ -37,13 +38,18 @@ def connect_to_reddit(reddit_client_id, reddit_client_secret):
 
 
 def get_story_from_reddit(subreddits: [], platform_tts, test_mode, reddit, platform):
+    # reduce complexity / break down into smaller functions if possible
+    print("Getting a story from Reddit...")
     tts_character_limit = 200
+    min_character_len = 300
 
     if platform == "youtube":
-        max_character_len = 850
+        max_character_len = 830
 
     else:
         max_character_len = 2400
+
+    url_pattern = re.compile(r'http', flags=re.IGNORECASE)
 
     while True:
         subreddit = random.choice(subreddits)
@@ -57,7 +63,7 @@ def get_story_from_reddit(subreddits: [], platform_tts, test_mode, reddit, platf
                 time.sleep(5)
 
             # submission = reddit.subreddit(subreddit_name).random()
-            for submission in reddit.subreddit(f"{subreddit_name}").hot(limit=5):
+            for submission in reddit.subreddit(f"{subreddit_name}").hot(limit=20):
                 submission_author = submission.author
                 submission_title = submission.title
                 submission_is_self = submission.is_self
@@ -74,13 +80,17 @@ def get_story_from_reddit(subreddits: [], platform_tts, test_mode, reddit, platf
                 reddit_submission = identify_post_type(submission_is_self, submission_text, submission_url)
 
                 if reddit_submission.kind == "image" or reddit_submission.kind == "video":
-                    print(f"This submission is not in text {submission_title}")
+                    # print(f"This submission is not in text {submission_title}")
                     continue
 
-                print(submission_title)
+                # print(submission_title)
 
                 if 'rules' in submission_title.lower():
-                    print("Skipping Subreddit Rules")
+                    # print("Skipping Subreddit Rules")
+                    continue
+
+                if url_pattern.search(submission_text.lower()):
+                    # print("Skipping post that contains a link")
                     continue
 
                 suitable_submission = False
@@ -96,14 +106,22 @@ def get_story_from_reddit(subreddits: [], platform_tts, test_mode, reddit, platf
                     top_comment_author = str(top_comment_author)
                     top_comment_author = top_comment_author.replace("-", "")
 
-                    print(top_comment_body)
+                    # print(top_comment_body)
                     if top_comment_author == "AutoModerator":
-                        print("Skipping bot comment")
+                        # print("Skipping bot comment")
+                        continue
+
+                    if top_comment_author == submission_author:
+                        # print("Skipping Submission Authors comment")
+                        continue
+
+                    if url_pattern.search(top_comment_body.lower()):
+                        # print("Skipping comment that contains a link")
                         continue
 
                     total_length = len(submission_title) + len(submission_text) + len(top_comment_body) + len(platform_tts)
 
-                    if 300 < total_length <= max_character_len:
+                    if min_character_len < total_length <= max_character_len:
                         if test_mode is True:
                             suitable_submission = True
                             break
@@ -117,9 +135,9 @@ def get_story_from_reddit(subreddits: [], platform_tts, test_mode, reddit, platf
                             else:
                                 continue
 
-            if suitable_submission:
-                print("found suitable submission")
-                submission_type = reddit_submission.kind
+                if suitable_submission is True:
+                    print("Found a suitable submission!")
+                    submission_type = reddit_submission.kind
 
                 if not os.path.exists(f"{launcher_path}/temp/ttsoutput/texts/"):
                     os.makedirs(f"{launcher_path}/temp/ttsoutput/texts/")
@@ -150,7 +168,6 @@ def get_story_from_reddit(subreddits: [], platform_tts, test_mode, reddit, platf
                         submission_type,
                         top_comment_author,
                         top_comment_body)
-                break
 
         except praw.exceptions.APIException as api_exception:
             print(f"PRAW API Exception: {api_exception}")

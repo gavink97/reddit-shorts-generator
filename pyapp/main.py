@@ -111,7 +111,8 @@ def make_youtube(test_mode):
     except HttpError as e:
         print("An HTTP error %d occurred:\n%s" % (e.resp.status, e.content))
 
-    os.remove(short_file_path)
+    if os.path.exists(short_file_path):
+        os.remove(short_file_path)
 
 
 def make_tiktok(test_mode):
@@ -154,10 +155,12 @@ def make_tiktok(test_mode):
             print(f"Upload failed with exception: {e}. Retrying... Attempt {retry_count + 1} of {max_retry_attempts}")
             retry_count += 1
 
-    if retry_count == max_retry_attempts:
-        print("Max retries exceeded. Failed to upload a video to tiktok.")
+        if retry_count == max_retry_attempts:
+            print("Max retries exceeded. Failed to upload a video to tiktok.")
+            break
 
-    os.remove(short_file_path)
+    if os.path.exists(short_file_path):
+        os.remove(short_file_path)
 
 
 if __name__ == '__main__':

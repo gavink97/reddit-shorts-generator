@@ -14,15 +14,15 @@ for file in video_resources:
     if not file.startswith('.DS_Store'):
         footage.append(file_path)
 
+# CHECK MUSIC FOR COPYRIGHTS ON TIKTOK BEFORE USING
 # music_path, volumex float, music_type
 music = [
         # General
-        (f"{music_resources_path}/morninglightmusic_uplifting_inspiring.mp3", 0.2, "general"),
         (f"{music_resources_path}/lakey_better_days.mp3", 0.2, "general"),
         (f"{music_resources_path}/fredji_flying_high.mp3", 0.2, "general"),
         (f"{music_resources_path}/lakey_inspired_blue_boi.mp3", 0.15, "general"),
         (f"{music_resources_path}/mona_wonderlick_golden.mp3", 0.2, "general"),
-        (f"{music_resources_path}/roa_music_lights.mp3", 0.2, "general"),
+        (f"{music_resources_path}/roa_music_lights.mp3", 0.16, "general"),
 
         # Storytime
         (f"{music_resources_path}/keysofmoonmusic_lonesome_journey.mp3", 0.4, "storytime"),

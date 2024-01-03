@@ -19,11 +19,11 @@ def check_if_video_exists(db_user, db_pass, db_host, db_port, db_database, submi
 
     if len(rows) > 0:
         video_exists = True
-        print("video found in DB")
+        print("Video found in DB!")
 
     else:
         video_exists = False
-        print("video not in DB")
+        print("Video not in DB!")
 
     db.commit()
     cursor.close()

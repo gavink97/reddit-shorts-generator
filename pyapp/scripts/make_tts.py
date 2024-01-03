@@ -13,6 +13,7 @@ tiktok_session_id = os.environ['TIKTOK_SESSION_ID_TTS']
 
 
 def generate_tiktok_tts(submission_title, submission_author, submission_text, top_comment_body, top_comment_author, platform_tts_path, platform_tts):
+    # add try except in case tts gives session id error
     tiktok_narrator = "en_male_narration"
     tiktok_commentor = "en_us_009"
     my_tts = "en_us_007"
