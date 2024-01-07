@@ -4,8 +4,8 @@ import os
 from PIL import Image, ImageFont, ImageDraw
 
 from config import launcher_path
-from scripts.minor_operations import split_string_at_space, abbreviate_number, format_relative_time
-# from minor_operations import split_string_at_space, abbreviate_number, format_relative_time
+from scripts.utils import split_string_at_space, abbreviate_number, format_relative_time
+# from utils import split_string_at_space, abbreviate_number, format_relative_time
 
 
 # test values
@@ -58,10 +58,11 @@ def generate_reddit_story_image(submission_author, submission_title, subreddit, 
     submission_score_formatted = abbreviate_number(submission_score)
     submission_comments_formatted = abbreviate_number(submission_comments_int)
 
+    font = "LiberationSans"
     draw = ImageDraw.Draw(story_template)
-    twenty_pt_bold = ImageFont.truetype("arialbd.ttf", 82)
-    twenty_pt_reg = ImageFont.truetype("arial.ttf", 82)
-    twenty_six_pt_bold = ImageFont.truetype("arialbd.ttf", 110)
+    twenty_pt_bold = ImageFont.truetype(f'{font}-Bold', 82)
+    twenty_pt_reg = ImageFont.truetype(f'{font}-Regular', 82)
+    twenty_six_pt_bold = ImageFont.truetype(f'{font}-Bold', 110)
 
     if os.path.exists(community_logo_path):
         community_logo = Image.open(community_logo_path)
@@ -106,3 +107,5 @@ def generate_reddit_story_image(submission_author, submission_title, subreddit, 
     story_template.save(submission_image)
 
     # story_template.show()
+
+# generate_reddit_story_image(submission_author, submission_title, subreddit, submission_timestamp, submission_score, submission_comments_int)

@@ -11,10 +11,11 @@ from moviepy.video.fx.resize import resize
 from moviepy.video.fx.fadeout import fadeout
 
 from config import launcher_path
-from scripts.minor_operations import random_choice_music
+from scripts.utils import random_choice_music
 
 
 def create_short_video(footage: [], music: [], submission_author, submission_text, narrator_title_track, narrator_content_track, commentor_track, platform_tts_track, subreddit_music_type):
+    # fix ffmpeg bug
     # rewrite into smaller functions
     # fix bug with whisper not always giving subtitles
     submission_image = f"{launcher_path}/temp/images/{submission_author}.png"

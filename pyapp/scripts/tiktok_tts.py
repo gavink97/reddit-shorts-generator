@@ -81,7 +81,6 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, 
 
             os.removedirs('./batch/')
 
-
         os.makedirs('./batch/')
 
         for i, item in enumerate(textlist):
@@ -105,40 +104,55 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, 
         'Cookie': f'sessionid={session_id}'
     }
     url = f"{api_url}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
-    r = requests.post(url, headers=headers)
 
-    if r.json()["message"] == "Couldn't load speech. Try again.":
-        output_data = {"status": "Session ID is invalid", "status_code": 5}
-        print(output_data)
-        return output_data
+    max_post_attempts = 3
+    post_attempt_count = 0
 
-    vstr = [r.json()["data"]["v_str"]][0]
-    msg = [r.json()["message"]][0]
-    scode = [r.json()["status_code"]][0]
-    log = [r.json()["extra"]["log_id"]][0]
-    dur = [r.json()["data"]["duration"]][0]
-    spkr = [r.json()["data"]["speaker"]][0]
+    while post_attempt_count < max_post_attempts:
+        try:
+            r = requests.post(url, headers=headers)
 
-    b64d = base64.b64decode(vstr)
+            if r.json()["message"] == "Couldn't load speech. Try again.":
+                output_data = {"status": "Session ID is invalid", "status_code": 5}
+                print(output_data)
+                return output_data
 
-    with open(filename, "wb") as out:
-        out.write(b64d)
+            vstr = [r.json()["data"]["v_str"]][0]
+            msg = [r.json()["message"]][0]
+            scode = [r.json()["status_code"]][0]
+            log = [r.json()["extra"]["log_id"]][0]
+            dur = [r.json()["data"]["duration"]][0]
+            spkr = [r.json()["data"]["speaker"]][0]
 
-    output_data = {
-        "status": msg.capitalize(),
-        "status_code": scode,
-        "duration": dur,
-        "speaker": spkr,
-        "log": log
-    }
+            b64d = base64.b64decode(vstr)
 
-    print(output_data)
+            with open(filename, "wb") as out:
+                out.write(b64d)
 
-    if play is True:
-        playsound.playsound(filename)
-        os.remove(filename)
+            output_data = {
+                "status": msg.capitalize(),
+                "status_code": scode,
+                "duration": dur,
+                "speaker": spkr,
+                "log": log
+                }
 
-    return output_data
+            print(output_data)
+
+            if play is True:
+                playsound.playsound(filename)
+                os.remove(filename)
+
+            return output_data
+
+        except Exception as e:
+            print(f"An error occurred during the request: {e}")
+            post_attempt_count += 1
+            if post_attempt_count < max_post_attempts:
+                print(f"Retrying in 5 seconds... (Attempt {post_attempt_count} of {max_post_attempts})")
+                time.sleep(5)
+            else:
+                print("Max retry attempts reached. Exiting retry loop.")
 
 
 def tts_batch(session_id: str, text_speaker: str = 'en_us_002', req_text: str = 'TikTok Text to Speech', filename: str = 'voice.mp3'):
@@ -152,37 +166,50 @@ def tts_batch(session_id: str, text_speaker: str = 'en_us_002', req_text: str = 
     }
     url = f"{api_url}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
 
-    r = requests.post(url, headers=headers)
+    max_post_attempts = 3
+    post_attempt_count = 0
 
-    if r.json()["message"] == "Couldn't load speech. Try again.":
-        output_data = {"status": "Session ID is invalid", "status_code": 5}
-        print(output_data)
-        return output_data
+    while post_attempt_count < max_post_attempts:
+        try:
+            r = requests.post(url, headers=headers)
 
-    vstr = [r.json()["data"]["v_str"]][0]
-    msg = [r.json()["message"]][0]
-    scode = [r.json()["status_code"]][0]
-    log = [r.json()["extra"]["log_id"]][0]
+            if r.json()["message"] == "Couldn't load speech. Try again.":
+                output_data = {"status": "Session ID is invalid", "status_code": 5}
+                print(output_data)
+                return output_data
 
-    dur = [r.json()["data"]["duration"]][0]
-    spkr = [r.json()["data"]["speaker"]][0]
+            vstr = [r.json()["data"]["v_str"]][0]
+            msg = [r.json()["message"]][0]
+            scode = [r.json()["status_code"]][0]
+            log = [r.json()["extra"]["log_id"]][0]
+            dur = [r.json()["data"]["duration"]][0]
+            spkr = [r.json()["data"]["speaker"]][0]
 
-    b64d = base64.b64decode(vstr)
+            b64d = base64.b64decode(vstr)
 
-    with open(filename, "wb") as out:
-        out.write(b64d)
+            with open(filename, "wb") as out:
+                out.write(b64d)
 
-    output_data = {
-        "status": msg.capitalize(),
-        "status_code": scode,
-        "duration": dur,
-        "speaker": spkr,
-        "log": log
-    }
+            output_data = {
+                "status": msg.capitalize(),
+                "status_code": scode,
+                "duration": dur,
+                "speaker": spkr,
+                "log": log
+                }
 
-    print(output_data)
+            print(output_data)
 
-    return output_data
+            return output_data
+
+        except Exception as e:
+            print(f"An error occurred during the request: {e}")
+            post_attempt_count += 1
+            if post_attempt_count < max_post_attempts:
+                print(f"Retrying in 5 seconds... (Attempt {post_attempt_count} of {max_post_attempts})")
+                time.sleep(5)
+            else:
+                print("Max retry attempts reached. Exiting retry loop.")
 
 
 def batch_create(filename: str = 'voice.mp3'):

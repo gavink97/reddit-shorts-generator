@@ -257,8 +257,8 @@ def watch_youtube_videos(strategy):
 
 watch_count = 1
 videos = 30
-# strategy = "shorts"
-strategy = random.choice(strategies)
+strategy = "shorts"
+# strategy = random.choice(strategies)
 while True:
     watch_youtube_videos(strategy)
     watch_count += 1

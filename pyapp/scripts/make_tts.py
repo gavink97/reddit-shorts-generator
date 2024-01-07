@@ -13,7 +13,6 @@ tiktok_session_id = os.environ['TIKTOK_SESSION_ID_TTS']
 
 
 def generate_tiktok_tts(submission_title, submission_author, submission_text, top_comment_body, top_comment_author, platform_tts_path, platform_tts):
-    # add try except in case tts gives session id error
     tiktok_narrator = "en_male_narration"
     tiktok_commentor = "en_us_009"
     my_tts = "en_us_007"
@@ -26,11 +25,11 @@ def generate_tiktok_tts(submission_title, submission_author, submission_text, to
     platform_tts_track = f"{launcher_path}/temp/ttsoutput/youtube.mp3"
 
     submission_title_path = f'{launcher_path}/temp/ttsoutput/texts/{submission_author}_title.txt'
-    top_comment_body_path = f'{launcher_path}/temp/ttsoutput/texts/{top_comment_author}.txt'
     submission_text_path = f'{launcher_path}/temp/ttsoutput/texts/{submission_author}_content.txt'
+    top_comment_body_path = f'{launcher_path}/temp/ttsoutput/texts/{top_comment_author}.txt'
 
     # Platform TTS
-    if len(platform_tts) > tts_character_limit:
+    if len(platform_tts) >= tts_character_limit:
         tts(session_id=tiktok_session_id, text_speaker=my_tts,
             file=platform_tts_path, filename=platform_tts_track)
 
@@ -39,7 +38,7 @@ def generate_tiktok_tts(submission_title, submission_author, submission_text, to
             req_text=platform_tts, filename=platform_tts_track)
 
     # Submission Title TTS
-    if len(submission_title) > tts_character_limit:
+    if len(submission_title) >= tts_character_limit:
         tts(session_id=tiktok_session_id, text_speaker=tiktok_narrator,
             file=submission_title_path, filename=narrator_title_track)
 
@@ -52,7 +51,7 @@ def generate_tiktok_tts(submission_title, submission_author, submission_text, to
         submission_text.strip()
 
     if submission_text != "":
-        if len(submission_text) > tts_character_limit:
+        if len(submission_text) >= tts_character_limit:
             tts(session_id=tiktok_session_id, text_speaker=tiktok_narrator,
                 file=submission_text_path, filename=narrator_content_track)
 
@@ -61,7 +60,7 @@ def generate_tiktok_tts(submission_title, submission_author, submission_text, to
                 req_text=submission_text, filename=narrator_content_track)
 
     # Top Comment Body TTS
-    if len(top_comment_body) > tts_character_limit:
+    if len(top_comment_body) >= tts_character_limit:
         tts(session_id=tiktok_session_id, text_speaker=tiktok_commentor,
             file=top_comment_body_path, filename=commentor_track)
 

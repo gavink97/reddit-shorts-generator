@@ -1,8 +1,7 @@
 import datetime
 import os
 import random
-
-from moviepy.editor import VideoFileClip
+import unicodedata
 
 from config import launcher_path
 
@@ -60,18 +59,6 @@ def format_relative_time(previous_time):
         return "Just now"
 
 
-def check_video_fps(footage: []):
-    for video in footage:
-        check_fps = VideoFileClip(video)
-        rate = check_fps.fps
-
-        print(f"FPS : {str(rate)}")
-
-        if rate != 30:
-            # this doesn't work
-            check_fps.write_videofile(video, fps=30)
-
-
 def tts_for_platform(platform):
     if platform == "youtube":
         platform_tts_path = os.path.join(launcher_path, "youtube_tts.txt")
@@ -107,3 +94,7 @@ def random_choice_music(music, subreddit_music_type):
 
     else:
         return None, None
+
+
+def remove_format_characters(text):
+    return ''.join(ch for ch in text if unicodedata.category(ch)[0] != 'C')

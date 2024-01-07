@@ -51,3 +51,33 @@ def write_to_db(db_user, db_pass, db_host, db_port, db_database, submission_id, 
 
     cursor.close()
     db.close()
+
+
+def check_for_admin_posts(db_user, db_pass, db_host, db_port, db_database, submission_id):
+    db = connect_to_database(db_user, db_pass, db_host, db_port)
+    cursor = db.cursor()
+
+    use_database = f"USE {db_database};"
+    cursor.execute(use_database)
+
+    videos_query = """
+        SELECT * FROM admin
+        WHERE submission_id = %s;
+        """
+
+    cursor.execute(videos_query, (submission_id,))
+    rows = cursor.fetchall()
+
+    if len(rows) > 0:
+        admin_post = True
+        print("This Submission was written by an Admin")
+
+    else:
+        admin_post = False
+        # print("Video not in DB!")
+
+    db.commit()
+    cursor.close()
+    db.close()
+
+    return admin_post

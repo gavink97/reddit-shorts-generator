@@ -12,9 +12,9 @@ from config import launcher_path, footage, music, subreddits
 from scripts.get_reddit_stories import get_story_from_reddit, connect_to_reddit
 from scripts.make_submission_image import generate_reddit_story_image
 from scripts.make_tts import generate_tiktok_tts
-from scripts.create_short import create_short_video
+from scripts.create_short_v2 import create_short_video
 from scripts.make_youtube_metadata import create_video_title, create_video_keywords
-from scripts.minor_operations import tts_for_platform
+from scripts.utils import tts_for_platform
 from scripts.init_db import test_db_connection, create_tables
 from scripts.upload_to_youtube import initialize_upload, get_authenticated_service
 from tiktok_uploader.upload import upload_video
