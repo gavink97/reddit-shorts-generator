@@ -64,8 +64,9 @@ Because OpenAi's [Whisper](https://github.com/openai/whisper) is only compatible
 with Python 3.8 - 3.11 only use those versions of python.
 
 ```
-gh repo clone gavink97/reddit-shorts-generator .
-pip install -e .
+mkdir reddit-shorts
+gh repo clone gavink97/reddit-shorts-generator reddit-shorts
+pip install -e reddit-shorts
 ```
 
 ### Install dependencies
