@@ -1,4 +1,0 @@
-# must be ended with a new line "LF" (Unix) and not "CRLF" (Windows)
-0 */1 * * * /usr/local/bin/python3 -u /pyapp/main.py -p youtube >> /var/log/cron.log 2>&1
-30 */4 * * * /usr/local/bin/python3 -u /pyapp/main.py -p tiktok >> /var/log/cron.log 2>&1
-# MUST REBUILD DOCKER IMAGE IF CHANGES ARE MADE TO THE SCHEDULE
