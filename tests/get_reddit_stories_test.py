@@ -23,9 +23,8 @@ def test_connect_to_reddit(load_credentials):
 
 
 def test_get_story_from_reddit(load_credentials):
-    test_mode = True
     reddit = None
     platform = 'youtube'
     (platform_tts_path, platform_tts) = tts_for_platform(platform)
 
-    get_story_from_reddit(subreddits, platform_tts, test_mode, reddit, platform)
+    get_story_from_reddit(subreddits, platform_tts, reddit, platform)
