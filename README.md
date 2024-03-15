@@ -1,3 +1,5 @@
+https://github.com/gavink97/reddit-shorts-generator/assets/78187175/d244555b-235b-4897-8c70-7009c6ba45ea
+
 <h1 align="center">Reddit Shorts Generator</h1>
 <p align="center" style="font-size: large;">Generate Short-form media from UGC
 content from the worst website on the internet</p> <br>
@@ -10,6 +12,7 @@ content from the worst website on the internet</p> <br>
 - [Quick Start](#getting-started)
 - [Customization](#making-it-your-own)
 - [Contributing](#contributing)
+- [Roadmap](#roadmap)
 
 
 ## Why this project
@@ -102,3 +105,8 @@ Customize your shorts with FFMPG inside `create_short_v2.py`.
 
 ## Contributing
 All contributions are welcome!
+
+## Roadmap
+
+- [ ] Standalone video exports
+- [ ] TikTok Support
