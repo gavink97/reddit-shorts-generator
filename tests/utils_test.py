@@ -1,7 +1,5 @@
-import pytest
-import os
 import datetime
-from reddit_shorts.utils import split_string_at_space, abbreviate_number, format_relative_time, tts_for_platform, random_choice_music
+from reddit_shorts.utils import split_string_at_space, abbreviate_number, format_relative_time, tts_for_platform, random_choice_music, contains_bad_words
 from reddit_shorts.config import music, project_path
 
 
@@ -38,3 +36,10 @@ def test_tts_for_platform():
 def test_random_choice_music():
     subreddit_music_type = 'general'
     random_choice_music(music, subreddit_music_type)
+
+
+def test_contains_bad_words():
+    text = 'fuck'
+    text2 = 'what do we have here?'
+    assert contains_bad_words(text) is True
+    assert contains_bad_words(text2) is False

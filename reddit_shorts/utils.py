@@ -1,9 +1,9 @@
 import datetime
 import os
 import random
-import unicodedata
+import re
 
-from reddit_shorts.config import project_path
+from reddit_shorts.config import project_path, bad_words_list
 
 
 def split_string_at_space(text: str, index: int) -> int:
@@ -57,7 +57,8 @@ def format_relative_time(post_time: datetime.datetime) -> str:
         return "Just now"
 
 
-def tts_for_platform(platform: str):
+def tts_for_platform(**kwargs):
+    platform = kwargs.get('platform')
     if platform == "youtube":
         platform_tts_path = os.path.join(project_path, "youtube_tts.txt")
 
@@ -92,3 +93,12 @@ def random_choice_music(music: list, subreddit_music_type: str):
 
     else:
         return None, None
+
+
+def contains_bad_words(text: str, bad_words: list = bad_words_list) -> bool:
+    text = text.lower()
+    bad_words_pattern = re.compile(r'\b(?:' + '|'.join(re.escape(word) for word in bad_words) + r')\b', re.IGNORECASE)
+
+    if bad_words_pattern.search(text):
+        return True
+    return False

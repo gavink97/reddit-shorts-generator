@@ -5,21 +5,14 @@ import ssl
 from dotenv import load_dotenv
 from apiclient.errors import HttpError
 
-from reddit_shorts.config import footage, music, subreddits, launcher_path
+from reddit_shorts.config import launcher_path, project_path
 from reddit_shorts.get_reddit_stories import get_story_from_reddit, connect_to_reddit
 from reddit_shorts.make_submission_image import generate_reddit_story_image
 from reddit_shorts.make_tts import generate_tiktok_tts
-from reddit_shorts.create_short_v2 import create_short_video
+from reddit_shorts.create_short import create_short_video
 from reddit_shorts.make_youtube_metadata import create_video_title, create_video_keywords
-from reddit_shorts.utils import tts_for_platform
 from reddit_shorts.query_db import create_tables
 from reddit_shorts.upload_to_youtube import initialize_upload, get_authenticated_service
-
-try:
-    from tiktok_uploader.upload import upload_video
-
-except ImportError:
-    print("Tiktok Uploader is not available")
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
@@ -31,56 +24,39 @@ reddit_client_secret = os.environ['REDDIT_CLIENT_SECRET']
 VALID_PLATFORM_CHOICES = ("tiktok", "youtube", "both", "video")
 
 
-def run_script(platform: str):
-    (platform_tts_path, platform_tts) = tts_for_platform(platform)
+def run_script(**kwargs) -> list:
     reddit = connect_to_reddit(reddit_client_id, reddit_client_secret)
 
-    (subreddit,
-     subreddit_music_type,
-     submission_author,
-     submission_title,
-     submission_text,
-     submission_score,
-     submission_comments_int,
-     submission_timestamp,
-     submission_type,
-     top_comment_author,
-     top_comment_body) = get_story_from_reddit(subreddits, platform_tts, reddit, platform)
+    submission_data = get_story_from_reddit(reddit, **kwargs)
 
-    generate_reddit_story_image(submission_author, submission_title, subreddit, submission_timestamp, submission_score, submission_comments_int)
+    generate_reddit_story_image(**{**submission_data, **kwargs})
 
-    (narrator_title_track,
-     narrator_content_track,
-     commentor_track,
-     platform_tts_track) = generate_tiktok_tts(submission_title, submission_author, submission_text, top_comment_body, top_comment_author, platform_tts_path, platform_tts)
+    tts_tracks = generate_tiktok_tts(**{**submission_data, **kwargs})
 
-    short_file_path = create_short_video(footage, music, submission_author, submission_text, narrator_title_track, narrator_content_track, commentor_track, platform_tts_track, subreddit_music_type)
+    # fix tts_tracks being a tuple
+    short_file_path = create_short_video(**{**tts_tracks, **submission_data, **kwargs})
 
-    short_video_title = create_video_title(submission_title, subreddit, platform)
+    short_video_title = create_video_title(**{**submission_data, **kwargs})
 
-    return short_video_title, short_file_path, submission_title, subreddit
+    return short_video_title, short_file_path, submission_data
 
 
-def main():
-    # enable insertion of video, text, music
-    # if text input is enabled should skip making the reddit image
-    # rewrite to accept video as a platform
-    parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--platform", choices=VALID_PLATFORM_CHOICES, default=VALID_PLATFORM_CHOICES[3], help="Choose what platform to upload to:")
-    parser.add_argument("-i", "--input", type=str.lower, action='store', default=False, help="Input your own text")
-    parser.add_argument("-v", "--video", type=str.lower, action='store', default=False, help="Input your own video path")
-    parser.add_argument("-m", "--music", type=str.lower, action='store', default=False, help="Input your own music")
-    args = parser.parse_args()
+# rewrite this function
+def main(**kwargs) -> None:
+    platform = kwargs.get("platform")
+    db_path = f'{project_path}/reddit-shorts/shorts.db'
 
-    platform_choice = args.platform
-    # input_text = args.input
-    # input_video = args.video
-    # input_music = args.music
+    if not os.path.isfile(db_path):
+        create_tables()
 
-    create_tables()
+    if platform == "tiktok":
+        try:
+            from tiktok_uploader.upload import upload_video
 
-    if platform_choice == "tiktok":
-        short_video_title, short_file_path = run_script(platform_choice)
+        except ImportError:
+            print("Tiktok Uploader is unavailable")
+
+        short_video_title, short_file_path, submission_data = run_script(**kwargs)
 
         max_retry_attempts = 5
         retry_count = 0
@@ -101,8 +77,12 @@ def main():
         if os.path.exists(short_file_path):
             os.remove(short_file_path)
 
-    elif platform_choice == "youtube":
-        short_video_title, short_file_path, submission_title, subreddit = run_script(platform_choice)
+    elif platform == "youtube":
+
+        short_video_title, short_file_path, submission_data = run_script(**kwargs)
+
+        submission_title = submission_data.get('title')
+        subreddit = submission_data.get('subreddit')
 
         additional_keywords = "hidden reddit,hidden,reddit,minecraft,gaming"
         youtube_shorts_keywords = create_video_keywords(submission_title, subreddit, additional_keywords)
@@ -126,14 +106,49 @@ def main():
         if os.path.exists(short_file_path):
             os.remove(short_file_path)
 
-    elif platform_choice == "both":
+    elif platform == "both":
         # rewrite to make 2 videos with different platform tts
-        run_script(platform_choice)
+        run_script(platform)
 
-    elif platform_choice == "video":
+    elif platform == "video":
         # no tiktok tts
-        run_script(platform_choice)
+        run_script(platform)
+
+
+def parse_my_args() -> dict:
+    # enable insertion of video, text, music
+    # if text input is enabled should skip making the reddit image
+    # rewrite to accept video as a platform
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-p", "--platform", choices=VALID_PLATFORM_CHOICES, default=VALID_PLATFORM_CHOICES[3], help="Choose what platform to upload to:")
+    parser.add_argument("-i", "--input", type=str.lower, action='store', default=False, help="Input your own text")
+    parser.add_argument("-v", "--video", type=str.lower, action='store', default=False, help="Input your own video path")
+    parser.add_argument("-m", "--music", type=str.lower, action='store', default=False, help="Input your own music") 
+    parser.add_argument("-pf", "--filter", action="store_true", default=False, help="Profanity filter")
+
+    args = parser.parse_args()
+
+    platform = args.platform
+    profanity_filter = args.filter
+
+    # input_text = args.input
+    # input_video = args.video
+    # input_music = args.music
+
+    return {
+        'platform': platform,
+        'filter': profanity_filter,
+    }
+
+
+def run() -> None:
+    args = parse_my_args()
+    main(**args)
 
 
 if __name__ == '__main__':
-    main()
+    run()
+
+else:
+    print("problem with __main__")
+    run()

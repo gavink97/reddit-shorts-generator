@@ -7,7 +7,14 @@ from reddit_shorts.config import project_path
 from reddit_shorts.utils import split_string_at_space, abbreviate_number, format_relative_time
 
 
-def generate_reddit_story_image(submission_author: str, submission_title: str, subreddit: str, submission_timestamp: float, submission_score: int, submission_comments_int: int) -> None:
+def generate_reddit_story_image(**kwargs) -> None:
+    subreddit = kwargs.get('subreddit')
+    submission_author = kwargs.get('author')
+    submission_title = kwargs.get('title')
+    submission_timestamp = kwargs.get('timestamp')
+    submission_score = kwargs.get('score')
+    submission_comments_int = kwargs.get('num_comments')
+
     # add flair
     subreddit_lowercase = subreddit.lower()
 
