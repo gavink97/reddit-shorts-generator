@@ -13,6 +13,7 @@ content from the worst website on the internet</p> <br>
 - [Customization](#making-it-your-own)
 - [Contributing](#contributing)
 - [Roadmap](#roadmap)
+- [Star History](#star-history)
 
 
 ## Why this project
@@ -100,7 +101,7 @@ the moment*
 
 
 ## Making it your own
-Customize your shorts with FFMPG inside `create_short_v2.py`.
+Customize your shorts with FFMPG inside `create_short.py`.
 
 
 ## Contributing
@@ -110,3 +111,7 @@ All contributions are welcome!
 
 - [ ] Standalone video exports
 - [ ] TikTok Support
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=gavink97/reddit-shorts-generator&type=Date)](https://star-history.com/#gavink97/reddit-shorts-generator&Date)

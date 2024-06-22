@@ -1,7 +1,10 @@
 import re
 
 
-def create_video_title(submission_title: str, subreddit: str, platform: str):
+def create_video_title(**kwargs) -> str:
+    submission_title = kwargs.get('title')
+    platform = kwargs.get('platform')
+
     if platform == "youtube":
         title_character_limit = 100
 
@@ -25,7 +28,7 @@ def create_video_title(submission_title: str, subreddit: str, platform: str):
     return short_video_title
 
 
-def create_video_keywords(submission_title: str, subreddit: str, additional_keywords: str = None):
+def create_video_keywords(submission_title: str, subreddit: str, additional_keywords: str = None) -> list:
     # character limit is 500
     cleaned_sentence = re.sub(r'[^\w\s]', '', submission_title.lower())
     keywords = cleaned_sentence.split()

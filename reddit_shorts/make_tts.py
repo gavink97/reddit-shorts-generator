@@ -5,14 +5,25 @@ from dotenv import load_dotenv
 
 from reddit_shorts.config import project_path
 from reddit_shorts.tiktok_tts import tts
+from reddit_shorts.utils import tts_for_platform
+
 
 ssl._create_default_https_context = ssl._create_unverified_context
 
 load_dotenv()
 tiktok_session_id = os.environ['TIKTOK_SESSION_ID_TTS']
 
+
 # rewrite to ignore platform_tts if video
-def generate_tiktok_tts(submission_title, submission_author, submission_text, top_comment_body, top_comment_author, platform_tts_path, platform_tts):
+# update tiktok_tts module
+def generate_tiktok_tts(**kwargs) -> dict:
+    submission_author = kwargs.get('author')
+    submission_title = kwargs.get('title')
+    submission_text = kwargs.get('text')
+    top_comment_author = kwargs.get('top_comment_author')
+    top_comment_body = kwargs.get('top_comment_body')
+    (platform_tts_path, platform_tts) = tts_for_platform(**kwargs)
+
     # check tiktok_tts.py for a full list of tts voice options
     tiktok_narrator = "en_male_narration"
     tiktok_commentor = "en_us_009"
@@ -78,7 +89,9 @@ def generate_tiktok_tts(submission_title, submission_author, submission_text, to
     if os.path.exists(top_comment_body_path):
         os.remove(top_comment_body_path)
 
-    return (narrator_title_track,
-            narrator_content_track,
-            commentor_track,
-            platform_tts_track)
+    return {
+        'title_track': narrator_title_track,
+        'content_track': narrator_content_track,
+        'commentor_track': commentor_track,
+        'platform_track': platform_tts_track
+    }

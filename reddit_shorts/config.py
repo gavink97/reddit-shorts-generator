@@ -83,3 +83,9 @@ subreddits = [
         ("creepyencounters", "creepy", True),
         ("thetruthishere", "creepy", False)
         ]
+
+bad_words_list = [
+    "porn",
+    "fuck",
+    "fucking"
+]

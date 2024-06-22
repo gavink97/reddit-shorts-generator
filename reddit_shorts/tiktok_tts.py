@@ -65,7 +65,7 @@ voices = [
     'en_female_emotional'         # peaceful
 ]
 
-api_url = "https://api16-normal-useast1a.tiktokv.com/media/api/text/speech/invoke/"
+api_url = "https://api16-normal-useast5.us.tiktokv.com/media/api/text/speech/invoke/"
 
 
 def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, filename: str = 'voice.mp3', play: bool = False, file: str = None):
@@ -95,6 +95,7 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, 
 
         return
 
+    req_text = str(req_text)
     req_text = req_text.replace("+", "plus")
     req_text = req_text.replace(" ", "+")
     req_text = req_text.replace("&", "and")
