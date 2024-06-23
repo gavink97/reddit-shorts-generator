@@ -8,12 +8,12 @@ from reddit_shorts.utils import split_string_at_space, abbreviate_number, format
 
 
 def generate_reddit_story_image(**kwargs) -> None:
-    subreddit = kwargs.get('subreddit')
-    submission_author = kwargs.get('author')
-    submission_title = kwargs.get('title')
+    subreddit = str(kwargs.get('subreddit'))
+    submission_author = str(kwargs.get('author'))
+    submission_title = str(kwargs.get('title'))
     submission_timestamp = kwargs.get('timestamp')
-    submission_score = kwargs.get('score')
-    submission_comments_int = kwargs.get('num_comments')
+    submission_score = int(kwargs.get('score'))
+    submission_comments_int = int(kwargs.get('num_comments'))
 
     # add flair
     subreddit_lowercase = subreddit.lower()

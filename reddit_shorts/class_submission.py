@@ -3,6 +3,7 @@ from typing import Any, Optional
 import re
 import os
 from praw.models import MoreComments
+from praw.models.comment_forest import CommentForest
 from reddit_shorts.config import project_path
 from reddit_shorts.query_db import check_if_video_exists, write_to_db, check_for_admin_posts
 from reddit_shorts.class_comment import Comment
@@ -21,6 +22,7 @@ class Submission:
                  num_comments: int,
                  timestamp: datetime,
                  id: int,
+                 comments: CommentForest,
                  music_type: Optional[str],
                  top_comment_body: Optional[str],
                  top_comment_author: Optional[str],
@@ -34,10 +36,11 @@ class Submission:
         self.score = score
         self.num_comments = num_comments
         self.timestamp = timestamp
-        self.id = id,
+        self.id = id
+        self.comments = comments
         self.music_type = music_type
-        self.top_comment_body = top_comment_body,
-        self.top_comment_author = top_comment_author,
+        self.top_comment_body = top_comment_body
+        self.top_comment_author = top_comment_author
         self.kind = kind
 
     def as_dict(self):
@@ -52,6 +55,7 @@ class Submission:
             "num_comments": self.num_comments,
             "timestamp": self.timestamp,
             "id": self.id,
+            "comments": self.comments,
             "music_type": self.music_type,
             "top_comment_body": self.top_comment_body,
             "top_comment_author": self.top_comment_author,
@@ -148,6 +152,7 @@ class Submission:
                 num_comments=submission.num_comments,
                 timestamp=submission.created_utc,
                 id=submission_id,
+                comments=submission.comments,
                 music_type=subreddit_music_type,
                 top_comment_body=top_comment_body,
                 top_comment_author=top_comment_author,

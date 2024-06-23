@@ -21,7 +21,9 @@ def test_format_relative_time():
 
 
 def test_tts_for_platform():
-    platform = "youtube"
+    kwargs = {
+        'platform': 'youtube'
+    }
     platform_tts_path = f'{project_path}/youtube_tts.txt'
     try:
         with open(platform_tts_path, 'r') as file:
@@ -30,7 +32,7 @@ def test_tts_for_platform():
     except FileNotFoundError:
         print(f"File {platform_tts_path} not found.")
 
-    assert tts_for_platform(platform) == (platform_tts_path, platform_tts)
+    assert tts_for_platform(**kwargs) == (platform_tts_path, platform_tts)
 
 
 def test_random_choice_music():

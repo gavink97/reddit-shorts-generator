@@ -9,4 +9,5 @@ def test_process_comment():
         'id': 1
     }
 
-    Comment.process_comment(data, author)
+    comment = Comment(data['author'], data['body'], data['id'])
+    Comment.process_comment(comment, author)

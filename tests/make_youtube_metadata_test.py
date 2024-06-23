@@ -11,10 +11,15 @@ def metadata():
 
 
 def test_create_video_title(metadata):
-    platform = "youtube"
     submission_title, subreddit = metadata
 
-    assert create_video_title(submission_title, subreddit, platform) == "askreddit Craziest Coincidences: Redditors, what's the most mind-blowing coinc... #reddit #minecraft"
+    kwargs = {
+        'platform': 'youtube',
+        'title': submission_title,
+        'subreddit': subreddit
+    }
+
+    assert create_video_title(**kwargs) == "askreddit Craziest Coincidences: Redditors, what's the most mind-blowing coinc... #reddit #minecraft"
 
 
 def test_create_video_keywords(metadata):
