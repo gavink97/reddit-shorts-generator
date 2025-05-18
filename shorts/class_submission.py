@@ -4,29 +4,33 @@ import re
 import os
 from praw.models import MoreComments
 from praw.models.comment_forest import CommentForest
-from reddit_shorts.config import project_path
-from reddit_shorts.query_db import check_if_video_exists, write_to_db, check_for_admin_posts
-from reddit_shorts.class_comment import Comment
-from reddit_shorts.utils import tts_for_platform, contains_bad_words
+from shorts.config import _project_path, _temp_path
+from shorts.query_db import check_if_video_exists, write_to_db, check_for_admin_posts
+from shorts.class_comment import Comment
+from shorts.utils import contains_bad_words
 
 
+# clean up
+# rename text to content
 class Submission:
-    def __init__(self,
-                 subreddit: str,
-                 author: str,
-                 title: str,
-                 is_self: bool,
-                 text: str,
-                 url: str,
-                 score: int,
-                 num_comments: int,
-                 timestamp: datetime,
-                 id: int,
-                 comments: CommentForest,
-                 music_type: Optional[str],
-                 top_comment_body: Optional[str],
-                 top_comment_author: Optional[str],
-                 kind: str = None):
+    def __init__(
+        self,
+        subreddit: str,
+        author: str,
+        title: str,
+        is_self: bool,
+        text: str,
+        url: str,
+        score: int,
+        num_comments: int,
+        timestamp: datetime,
+        id: int,
+        comments: CommentForest,
+        music_type: Optional[str],
+        top_comment_body: Optional[str],
+        top_comment_author: Optional[str],
+        kind: str = None
+    ):
         self.subreddit = subreddit
         self.author = author
         self.title = title
@@ -63,27 +67,46 @@ class Submission:
         }
 
     @classmethod
-    def process_submission(cls, subreddit: list, submission: Any, **kwargs) -> 'Submission':
+    def process_submission(
+            cls,
+            subreddit: list,
+            submission: Any,
+            **kwargs
+    ) -> 'Submission':
         platform = kwargs.get('platform')
-        (platform_tts_path, platform_tts) = tts_for_platform(**kwargs)
+
+        match platform:
+            case "tiktok":
+                max_character_len = 2400
+                platform_tts_path = os.path.join(_project_path, "tiktok_tts.txt")
+
+                with open(platform_tts_path, 'r', encoding='utf-8') as file:
+                    platform_tts = str(file.read())
+
+            case "youtube":
+                max_character_len = 830
+                platform_tts_path = os.path.join(_project_path, "youtube_tts.txt")
+
+                with open(platform_tts_path, 'r', encoding='utf-8') as file:
+                    platform_tts = str(file.read())
+
+            case "video" | _:
+                max_character_len = 10000
+                platform_tts = ''
 
         subreddit_name = subreddit[0]
         subreddit_music_type = subreddit[1]
 
-        tts_character_limit = 200
         min_character_len = 300
-
-        if platform == 'youtube':
-            max_character_len = 830
-
-        elif platform == 'tiktok':
-            max_character_len = 2400
 
         submission_author = str(submission.author)
         submission_title = str(submission.title)
         submission_text = str(submission.selftext)
         submission_id = str(submission.id)
         submission_kind = identify_post_type(submission)
+
+        if submission_text == ' ':
+            submission_text = ''
 
         submission_author = submission_author.replace("-", "")
 
@@ -122,22 +145,34 @@ class Submission:
 
         if suitable_submission is True:
             print("Found a suitable submission!")
-            print(f"Suitable Submission:{subreddit}:{submission_title} Total:{total_length}")
+            print(f"Suitable Submission:{subreddit}:{submission_title}")
 
-            if not os.path.exists(f"{project_path}/temp/ttsoutput/texts/"):
-                os.makedirs(f"{project_path}/temp/ttsoutput/texts/")
+            tts_texts = os.path.join(_temp_path, 'ttsoutput', 'texts')
 
-            if len(submission_title) >= tts_character_limit:
-                with open(f'{project_path}/temp/ttsoutput/texts/{submission_author}_title.txt', 'w', encoding='utf-8') as file:
-                    file.write(submission_title)
+            if not os.path.exists(tts_texts):
+                os.makedirs(tts_texts)
 
-            if len(submission_text) >= tts_character_limit:
-                with open(f'{project_path}/temp/ttsoutput/texts/{submission_author}_content.txt', 'w', encoding='utf-8') as file:
+            with open(
+                os.path.join(tts_texts, f'{submission_author}_title.txt'),
+                'w',
+                encoding='utf-8'
+            ) as file:
+                file.write(submission_title)
+
+            with open(
+                os.path.join(tts_texts, f'{top_comment_author}.txt'),
+                'w',
+                encoding='utf-8'
+            ) as file:
+                file.write(top_comment_body)
+
+            if submission_text != '':
+                with open(
+                    os.path.join(tts_texts, f'{submission_author}_content.txt'),
+                    'w',
+                    encoding='utf-8'
+                ) as file:
                     file.write(submission_text)
-
-            if len(top_comment_body) >= tts_character_limit:
-                with open(f'{project_path}/temp/ttsoutput/texts/{top_comment_author}.txt', 'w', encoding='utf-8') as file:
-                    file.write(top_comment_body)
 
             write_to_db(submission_id, top_comment_id)
 

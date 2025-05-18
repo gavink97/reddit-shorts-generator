@@ -11,7 +11,7 @@ from googleapiclient.http import MediaFileUpload
 from google.auth.transport.requests import Request
 from apiclient.errors import HttpError
 
-from reddit_shorts.config import project_path
+from shorts.config import _project_path
 
 httplib2.RETRIES = 1
 
@@ -21,7 +21,7 @@ RETRIABLE_EXCEPTIONS = (httplib2.HttpLib2Error, IOError)
 
 RETRIABLE_STATUS_CODES = [500, 502, 503, 504]
 
-CLIENT_SECRETS_FILE = f"{project_path}/client_secrets.json"
+CLIENT_SECRETS_FILE = f"{_project_path}/client_secrets.json"
 
 YOUTUBE_UPLOAD_SCOPE = "https://www.googleapis.com/auth/youtube.upload"
 YOUTUBE_API_SERVICE_NAME = "youtube"
@@ -47,7 +47,7 @@ VALID_PRIVACY_STATUSES = ("public", "private", "unlisted")
 
 def get_authenticated_service():
     cred = None
-    pickle_file = f'{project_path}/token_{YOUTUBE_API_SERVICE_NAME}_{YOUTUBE_API_VERSION}.pickle'
+    pickle_file = f'{_project_path}/token_{YOUTUBE_API_SERVICE_NAME}_{YOUTUBE_API_VERSION}.pickle'
 
     if os.path.exists(pickle_file):
         with open(pickle_file, 'rb') as token:

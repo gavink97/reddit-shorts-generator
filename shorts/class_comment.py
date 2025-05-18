@@ -1,7 +1,7 @@
 from typing import Any
 import re
 
-from reddit_shorts.utils import contains_bad_words
+from shorts.utils import contains_bad_words
 
 
 class Comment():

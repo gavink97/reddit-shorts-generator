@@ -1,0 +1,143 @@
+= Reddit Shorts Generator - Generate Short-form media from UGC content
+ifdef::env-github[]
+Gavin Kondrath <78187175+gavink97@users.noreply.github.com>
+v1.0.0, 2025-01-31
+:homepage: https://github.com/gavink97/gridt
+endif::[]
+:toc:
+:toc-placement!:
+:icons: font
+
+Reddit Shorts Generator - Generate Short-form media from UGC content from reddit or anywhere else on the internet
+
+toc::[]
+
+== Features
+    - Upload videos directly to YouTube via the https://developers.google.com/youtube/v3[YouTube API]
+    - Automatically generate captions for your videos using Open AI https://github.com/openai/whisper[Whisper]
+    - Videos are highly customizable and render blazingly fast with FFMPEG
+    - Utilizes SQLite to avoid creating duplicate content
+
+== Getting Started
+RSG (Reddit Shorts Generator) is designed to be modular, with extensions built
+in to upload to YouTube or TikTok.
+
+=== Installation
+Install the reddit shorts repo in the root directory of the
+project as shown in the file tree.
+
+=== Build from source
+Because OpenAi's https://github.com/openai/whisper[Whisper] is only compatible
+with Python 3.8 - 3.11 only use those versions of python.
+
+```
+mkdir reddit-shorts
+gh repo clone gavink97/reddit-shorts-generator reddit-shorts
+pip install -e reddit-shorts
+```
+
+=== File Tree
+```
+├── client_secrets.json
+├── cookies.txt
+├── [reddit-shorts]
+├── resources
+│   ├── footage
+│   └── music
+├── tiktok-uploader
+├── tiktok_tts.txt
+└── youtube_tts.txt
+```
+
+=== Extensions
+- https://github.com/wkaisertexas/tiktok-uploader[TikTok Uploader] is required to upload shorts to TikTok.
+- https://developers.google.com/youtube/v3[YouTube Data API] is required to upload shorts to YouTube.
+
+=== Dependencies
+This package requires `ffmpeg fonts-liberation` to be installed.
+
+*This repository utilizes pillow to create reddit images, so make sure to
+uninstall PIL if you have it installed*
+
+== Commands
+
+=== Platform
+Upload to a platform via `-p` or `--platform`
+ 
+    shorts -p platform
+
+options are: `youtube` `tiktok` `video` (stand alone video) `all` (except standalone)
+
+=== Input
+Custom input text or path to custom input text via `-i` or `--input`
+
+    shorts -i "hello world"
+
+=== Video
+Custom video input via `-v` or `--video`
+
+    shorts -v path/to/your/video
+
+=== Music
+Custom music input via `-m` or `--music`
+
+    shorts -v path/to/your/music
+
+=== Profanity Filter
+Keep your content clean via `-pf` or `--filter`
+
+    shorts -pf
+
+=== Strategy
+Choose a strategy for gathering content via `--strategy`
+
+    shorts --strategy hot
+
+options are: `hot` `random`
+
+=== Title
+Custom title for video via `-t` or `--title`
+
+    shorts -p youtube -t "Hello Youtube!"
+
+*only an option when uploading to a platform*
+
+=== Keywords
+Custom keywords or hashtags for video via `-k or `--keywords`
+
+    shorts -p youtube -k "funny fyp reddit"
+
+*only an option when uploading to a platform*
+
+== Contributing
+
+I'm open to contributions.
+
+== Support
+
+If you're feeling generous you can support this project and others I make on
+https://ko-fi.com/E1E119NG8M[Ko-fi] :)
+
+== Roadmap
+
+=== Planned additions
+* [ ] Split Screen Video
+
+=== Feature ideas
+* [ ] AI Generated Titles / Tags
+* [ ] Automating volumes for music / tts
+
+== Star
+
+If you've found this useful please give it a star ⭐️ as it helps other developers
+find my repos.
+
+++++
+<a href="https://star-history.com/#gavink97/reddit-shorts-generator&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=gavink97/reddit-shorts-generator&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=gavink97/reddit-shorts-generator&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=gavink97/reddit-shorts-generator&type=Date" />
+ </picture>
+</a>
+++++

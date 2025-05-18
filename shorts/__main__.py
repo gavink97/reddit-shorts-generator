@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from reddit_shorts.main import main
+from shorts.main import _run
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(_run())

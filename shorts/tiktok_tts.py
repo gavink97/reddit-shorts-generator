@@ -8,6 +8,8 @@ import time
 import re
 import textwrap
 
+# Source: https://github.com/oscie57/tiktok-voice
+
 voices = [
     # DISNEY VOICES
     'en_us_ghostface',            # Ghost Face
@@ -65,15 +67,28 @@ voices = [
     'en_female_emotional'         # peaceful
 ]
 
-api_url = "https://api16-normal-useast5.us.tiktokv.com/media/api/text/speech/invoke/"
+# this may be different based on your tiktok session id
+# please check the link for instructions on how to get your uri.
+# https://github.com/oscie57/tiktok-voice/issues/60#issuecomment-2565037435
+
+uri = "https://api22-normal-c-alisg.tiktokv.com"
+endpoint = '/media/api/text/speech/invoke/'
+api_uri = uri + endpoint
 
 
-def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, filename: str = 'voice.mp3', play: bool = False, file: str = None):
+def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None,
+        filename: str = 'voice.mp3', play: bool = False, file: str = None):
 
     if file is not None:
         req_text = open(file, 'r', errors='ignore', encoding='utf-8').read()
         chunk_size = 200
-        textlist = textwrap.wrap(req_text, width=chunk_size, break_long_words=True, break_on_hyphens=False)
+
+        textlist = textwrap.wrap(
+            req_text,
+            width=chunk_size,
+            break_long_words=True,
+            break_on_hyphens=False
+        )
 
         if os.path.exists('./batch/'):
             for item in os.listdir('./batch/'):
@@ -104,7 +119,7 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, 
         'User-Agent': 'com.zhiliaoapp.musically/2022600030 (Linux; U; Android 7.1.2; es_ES; SM-G988N; Build/NRD90M;tt-ok/3.12.13.1)',
         'Cookie': f'sessionid={session_id}'
     }
-    url = f"{api_url}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
+    url = f"{api_uri}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
 
     max_post_attempts = 3
     post_attempt_count = 0
@@ -113,8 +128,14 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, 
         try:
             r = requests.post(url, headers=headers)
 
+            print(r.json()["message"])
+
             if r.json()["message"] == "Couldn't load speech. Try again.":
-                output_data = {"status": "Session ID is invalid", "status_code": 5}
+                output_data = {
+                    "status": "Session ID is invalid",
+                    "status_code": 5
+                }
+
                 print(output_data)
                 return output_data
 
@@ -153,7 +174,7 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None, 
                 print(f"Retrying in 5 seconds... (Attempt {post_attempt_count} of {max_post_attempts})")
                 time.sleep(5)
             else:
-                print("Max retry attempts reached. Exiting retry loop.")
+                raise Exception("Max retry attempts reached. Exiting retry loop.")
 
 
 def tts_batch(session_id: str, text_speaker: str = 'en_us_002', req_text: str = 'TikTok Text to Speech', filename: str = 'voice.mp3'):
@@ -165,7 +186,7 @@ def tts_batch(session_id: str, text_speaker: str = 'en_us_002', req_text: str = 
         'User-Agent': 'com.zhiliaoapp.musically/2022600030 (Linux; U; Android 7.1.2; es_ES; SM-G988N; Build/NRD90M;tt-ok/3.12.13.1)',
         'Cookie': f'sessionid={session_id}'
     }
-    url = f"{api_url}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
+    url = f"{api_uri}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
 
     max_post_attempts = 3
     post_attempt_count = 0
@@ -210,7 +231,7 @@ def tts_batch(session_id: str, text_speaker: str = 'en_us_002', req_text: str = 
                 print(f"Retrying in 5 seconds... (Attempt {post_attempt_count} of {max_post_attempts})")
                 time.sleep(5)
             else:
-                print("Max retry attempts reached. Exiting retry loop.")
+                raise Exception("Max retry attempts reached. Exiting retry loop.")
 
 
 def batch_create(filename: str = 'voice.mp3'):
