@@ -59,11 +59,22 @@ This package requires `ffmpeg fonts-liberation` to be installed.
 *This repository utilizes pillow to create reddit images, so make sure to
 uninstall PIL if you have it installed*
 
+=== Getting your TikTok Session ID
+You will need your tiktok session id in order to use tiktok generated text to speech
+
+==== Google Chrome
+For Google Chrome: open the inspector, Application tab, in the side bar under
+Storage click the Cookies drop down and select tiktok. Then filter for sessionid
+
+==== Firefox
+For Firefox: open the inspector, Storage tab then click the Cookies drop down
+and select tiktok. Then filter for sessionid
+
 == Commands
 
 === Platform
 Upload to a platform via `-p` or `--platform`
- 
+
     shorts -p platform
 
 options are: `youtube` `tiktok` `video` (stand alone video) `all` (except standalone)

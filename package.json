@@ -1,0 +1,22 @@
+{
+  "name": "reddit-shorts",
+  "version": "1.0.0",
+  "author": "Gavin Kondrath",
+  "email": "78187175+gavink97@users.noreply.github.com",
+  "description": "",
+  "github": "https://github.com/gavink97",
+  "homepage": "https://github.com/gavink97/reddit-video-automation#readme",
+  "bugs": {
+    "url": "https://github.com/gavink97/reddit-video-automation/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/gavink97/reddit-video-automation.git"
+  },
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1"
+  }
+}

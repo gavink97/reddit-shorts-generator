@@ -127,6 +127,12 @@ def _parse_args() -> dict:
             if not os.path.isfile(v):
                 raise Exception(f"Invalid video path provided: {v}")
 
+        if len(args.video) == 1 & split:
+            raise Exception(
+                "Invalid number of video inputs."
+                f" {len(args.video)} are provided."
+            )
+
     if args.music != '':
         if not os.path.isfile(args.music):
             raise Exception(f"Invalid music file path provided: {args.music}")
