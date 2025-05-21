@@ -1,5 +1,6 @@
 import os
 from contextlib import ExitStack
+
 import ffmpeg
 
 from shorts.config import _temp_path
@@ -45,7 +46,7 @@ def _audio(submission: dict, tts_tracks: dict, **kwargs) -> None:
             tracks.append(title_input)
 
             comment_input = ffmpeg.input(comment_track)
-            comment_audio = comment_input.audio.filter('volume', 1.4)
+            # comment_audio = comment_input.audio.filter('volume', 1.4)
 
             if submission.get('text') != '':
                 content_input = ffmpeg.input(content_track)
@@ -53,13 +54,13 @@ def _audio(submission: dict, tts_tracks: dict, **kwargs) -> None:
                 tracks.append(content_input)
 
             tracks.append(silent_audio)
-            tracks.append(comment_audio)
+            tracks.append(comment_input)
 
         if kwargs.get('platform') != 'video':
             platform_input = ffmpeg.input(platform_track)
-            platform_audio = platform_input.audio.filter('volume', 1.5)
+            # platform_audio = platform_input.audio.filter('volume', 1.5)
             tracks.append(silent_audio)
-            tracks.append(platform_audio)
+            tracks.append(platform_input)
 
         (
             ffmpeg

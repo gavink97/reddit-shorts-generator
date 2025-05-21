@@ -15,9 +15,8 @@ from shorts.config import _temp_path
 from shorts.utils import _clean_up
 from shorts.utils import _get_audio_duration
 from shorts.utils import _get_video_duration
+from shorts.utils import _normalize
 from shorts.utils import random_choice_music
-
-# write a function to measure the loudness of an audio file to properly setup loudness of music / voice over
 
 
 def _create_video(submission: dict, tts_tracks: dict, **kwargs) -> str:
@@ -44,10 +43,12 @@ def _create_video(submission: dict, tts_tracks: dict, **kwargs) -> str:
 
     music_looped = os.path.join(_temp_path, 'music_looped.mp3')
     processed_music = os.path.join(_temp_path, 'music_processed.mp3')
+    music_normalized = os.path.join(_temp_path, 'music_normalized.mp3')
     mixed_track = os.path.join(_temp_path, 'mixed_audio.mp3')
 
     ttsoutput_dir = os.path.join(_temp_path, 'ttsoutput')
     tts_combined = os.path.join(ttsoutput_dir, 'combined.mp3')
+    tts_normalized = os.path.join(ttsoutput_dir, 'tts_normalized.mp3')
     combined_srt = os.path.join(ttsoutput_dir, 'combined.srt')
 
     temp_files = [
@@ -57,7 +58,9 @@ def _create_video(submission: dict, tts_tracks: dict, **kwargs) -> str:
         music_looped,
         processed_music,
         combined_srt,
-        mixed_track
+        mixed_track,
+        music_normalized,
+        tts_normalized
     ]
 
     _audio(submission, tts_tracks, **kwargs)
@@ -67,10 +70,10 @@ def _create_video(submission: dict, tts_tracks: dict, **kwargs) -> str:
     tts_duration = math.floor(_get_audio_duration(tts_combined)) + 1
 
     if kwargs.get('music') == '':
-        music, music_volume = random_choice_music(_music, music_type)
+        music, _ = random_choice_music(_music, music_type)
     else:
         music = kwargs.get('music')
-        music_volume = 0.4
+        # music_volume = 0.4
 
     playhead = 0
 
@@ -197,10 +200,12 @@ def _create_video(submission: dict, tts_tracks: dict, **kwargs) -> str:
 
             music_track = ffmpeg.input(music_looped)
 
+        music_track = _normalize(music_track, -28)
+
         (
             music_track
             .filter('atrim', start=0, end=tts_duration)
-            .filter('volume', music_volume)
+            # .filter('volume', music_volume)
             .filter('afade', t='out', st=tts_duration - fade, d=fade)
             .output(processed_music)
             .run(overwrite_output=True)
@@ -211,6 +216,8 @@ def _create_video(submission: dict, tts_tracks: dict, **kwargs) -> str:
 
         background_music = ffmpeg.input(processed_music)
         tts = ffmpeg.input(tts_combined)
+
+        tts = _normalize(tts, -14)
 
         (
             ffmpeg

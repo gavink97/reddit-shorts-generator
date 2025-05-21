@@ -89,6 +89,16 @@ Custom video input via `-v` or `--video`
 
     shorts -v path/to/your/video
 
+
+=== Split
+Split video inputs via `-s` or `--split`
+
+    shorts --split
+
+*Split will automatically take effect if two or more videos are inputed via --video*
+
+    shorts --video path/to/video/one --video path/to/video/two
+
 === Music
 Custom music input via `-m` or `--music`
 
@@ -132,7 +142,7 @@ https://ko-fi.com/E1E119NG8M[Ko-fi] :)
 == Roadmap
 
 === Planned additions
-* [ ] Split Screen Video
+* [x] Split Screen Video
 
 === Feature ideas
 * [ ] AI Generated Titles / Tags
