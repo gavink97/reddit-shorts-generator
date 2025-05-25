@@ -47,3 +47,36 @@ def _video_keywords(
             unique_keywords.append(word)
 
     return unique_keywords
+
+
+# start here
+def _ai_title() -> str:
+    try:
+        from transformers import pipeline
+
+    except ImportError:
+        print("You do not have the required imports")
+
+    model = "deepseek-ai/DeepSeek-R1-Distill-Qwen-1.5B"
+    pipe = pipeline("text-generation", model=model, device="mps")
+
+    content = "this is a test just to see if its working :) hello world, how do you do?"
+
+    messages = [
+        {"role": "system", "content": "You are writing click bait video titles for a youtube video based on the content of the video", },
+        {"role": "user", "content": f"{content}"},
+    ]
+
+    prompt = pipe.tokenizer.apply_chat_template(
+        messages,
+        tokenize=False,
+        add_generation_prompt=True
+    )
+
+    resp = pipe(prompt, max_new_tokens=128)
+    # print(resp[0]['generated_text'])
+    print(resp)
+
+
+if __name__ == "__main__":
+    _ai_title()

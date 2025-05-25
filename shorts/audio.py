@@ -5,6 +5,7 @@ import ffmpeg
 
 from shorts.config import _temp_path
 from shorts.utils import _clean_up
+from shorts.utils import _normalize
 
 
 def _audio(submission: dict, tts_tracks: dict, **kwargs) -> None:
@@ -39,28 +40,35 @@ def _audio(submission: dict, tts_tracks: dict, **kwargs) -> None:
 
         if kwargs.get('input') != '':
             custom_input = ffmpeg.input(input_track)
-            tracks.append(custom_input)
+            custom_input_normalized = _normalize(custom_input, -16)
+
+            tracks.append(custom_input_normalized)
 
         else:
             title_input = ffmpeg.input(title_track)
-            tracks.append(title_input)
+            title_input_normalized = _normalize(title_input, -16)
+
+            tracks.append(title_input_normalized)
 
             comment_input = ffmpeg.input(comment_track)
-            # comment_audio = comment_input.audio.filter('volume', 1.4)
+            comment_input_normalized = _normalize(comment_input, -16)
 
             if submission.get('text') != '':
                 content_input = ffmpeg.input(content_track)
+                content_input_normalized = _normalize(content_input, -16)
+
                 tracks.append(silent_audio)
-                tracks.append(content_input)
+                tracks.append(content_input_normalized)
 
             tracks.append(silent_audio)
-            tracks.append(comment_input)
+            tracks.append(comment_input_normalized)
 
         if kwargs.get('platform') != 'video':
             platform_input = ffmpeg.input(platform_track)
-            # platform_audio = platform_input.audio.filter('volume', 1.5)
+            platform_input_normalized = _normalize(platform_input, -16)
+
             tracks.append(silent_audio)
-            tracks.append(platform_input)
+            tracks.append(platform_input_normalized)
 
         (
             ffmpeg

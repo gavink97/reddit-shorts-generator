@@ -1,17 +1,21 @@
-from datetime import datetime
-from typing import Any, Optional
-import re
 import os
+import re
+from datetime import datetime
+from typing import Any
+from typing import Optional
+
 from praw.models import MoreComments
 from praw.models.comment_forest import CommentForest
-from shorts.config import _project_path, _temp_path
-from shorts.query_db import check_if_video_exists, write_to_db, check_for_admin_posts
+
 from shorts.class_comment import Comment
+from shorts.config import _project_path
+from shorts.config import _temp_path
+from shorts.query_db import check_for_admin_posts
+from shorts.query_db import check_if_video_exists
+from shorts.query_db import write_to_db
 from shorts.utils import contains_bad_words
 
 
-# clean up
-# rename text to content
 class Submission:
     def __init__(
         self,
@@ -26,7 +30,6 @@ class Submission:
         timestamp: datetime,
         id: int,
         comments: CommentForest,
-        music_type: Optional[str],
         top_comment_body: Optional[str],
         top_comment_author: Optional[str],
         kind: str = None
@@ -42,7 +45,6 @@ class Submission:
         self.timestamp = timestamp
         self.id = id
         self.comments = comments
-        self.music_type = music_type
         self.top_comment_body = top_comment_body
         self.top_comment_author = top_comment_author
         self.kind = kind
@@ -60,7 +62,6 @@ class Submission:
             "timestamp": self.timestamp,
             "id": self.id,
             "comments": self.comments,
-            "music_type": self.music_type,
             "top_comment_body": self.top_comment_body,
             "top_comment_author": self.top_comment_author,
             "kind": self.kind
@@ -78,14 +79,16 @@ class Submission:
         match platform:
             case "tiktok":
                 max_character_len = 2400
-                platform_tts_path = os.path.join(_project_path, "tiktok_tts.txt")
+                platform_tts_path = os.path.join(
+                    _project_path, "tiktok_tts.txt")
 
                 with open(platform_tts_path, 'r', encoding='utf-8') as file:
                     platform_tts = str(file.read())
 
             case "youtube":
                 max_character_len = 830
-                platform_tts_path = os.path.join(_project_path, "youtube_tts.txt")
+                platform_tts_path = os.path.join(
+                    _project_path, "youtube_tts.txt")
 
                 with open(platform_tts_path, 'r', encoding='utf-8') as file:
                     platform_tts = str(file.read())
@@ -95,7 +98,6 @@ class Submission:
                 platform_tts = ''
 
         subreddit_name = subreddit[0]
-        subreddit_music_type = subreddit[1]
 
         min_character_len = 300
 
@@ -131,7 +133,8 @@ class Submission:
                 continue
 
             if total_length <= max_character_len:
-                video_exists = check_if_video_exists(submission_id, top_comment_id)
+                video_exists = check_if_video_exists(
+                    submission_id, top_comment_id)
                 if video_exists is False:
                     suitable_submission = True
                     break
@@ -168,7 +171,10 @@ class Submission:
 
             if submission_text != '':
                 with open(
-                    os.path.join(tts_texts, f'{submission_author}_content.txt'),
+                    os.path.join(
+                        tts_texts,
+                        f'{submission_author}_content.txt'
+                    ),
                     'w',
                     encoding='utf-8'
                 ) as file:
@@ -188,7 +194,6 @@ class Submission:
                 timestamp=submission.created_utc,
                 id=submission_id,
                 comments=submission.comments,
-                music_type=subreddit_music_type,
                 top_comment_body=top_comment_body,
                 top_comment_author=top_comment_author,
                 kind=submission_kind

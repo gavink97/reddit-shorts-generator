@@ -1,12 +1,14 @@
-import requests
-import base64
-import random
 import argparse
+import base64
 import os
-import playsound
-import time
+import random
 import re
 import textwrap
+
+import playsound
+import requests
+
+from shorts.config import _project_path
 
 # Source: https://github.com/oscie57/tiktok-voice
 
@@ -74,6 +76,7 @@ voices = [
 uri = "https://api22-normal-c-alisg.tiktokv.com"
 endpoint = '/media/api/text/speech/invoke/'
 api_uri = uri + endpoint
+_batch = os.path.join(_project_path, 'batch')
 
 
 def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None,
@@ -90,23 +93,24 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None,
             break_on_hyphens=False
         )
 
-        if os.path.exists('./batch/'):
-            for item in os.listdir('./batch/'):
-                os.remove('./batch/' + item)
+        if os.path.exists(_batch):
+            for item in os.listdir(_batch):
+                os.remove(os.path.join(_batch, item))
 
-            os.removedirs('./batch/')
+            os.removedirs(_batch)
 
-        os.makedirs('./batch/')
+        os.makedirs(_batch)
 
         for i, item in enumerate(textlist):
-            tts_batch(session_id, text_speaker, item, f'./batch/{i}.mp3')
+            batch = os.path.join(_batch, f'{i}.mp3')
+            tts_batch(session_id, text_speaker, item, batch)
 
         batch_create(filename)
 
-        for item in os.listdir('./batch/'):
-            os.remove('./batch/' + item)
+        for item in os.listdir(_batch):
+            os.remove(os.path.join(_batch, item))
 
-        os.removedirs('./batch/')
+        os.removedirs(_batch)
 
         return
 
@@ -121,63 +125,57 @@ def tts(session_id: str, text_speaker: str = "en_us_002", req_text: str = None,
     }
     url = f"{api_uri}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
 
-    max_post_attempts = 3
-    post_attempt_count = 0
+    try:
+        r = requests.post(url, headers=headers)
+        print(r.json()["message"])
 
-    while post_attempt_count < max_post_attempts:
-        try:
-            r = requests.post(url, headers=headers)
-
-            print(r.json()["message"])
-
-            if r.json()["message"] == "Couldn't load speech. Try again.":
-                output_data = {
-                    "status": "Session ID is invalid",
-                    "status_code": 5
-                }
-
-                print(output_data)
-                return output_data
-
-            vstr = [r.json()["data"]["v_str"]][0]
-            msg = [r.json()["message"]][0]
-            scode = [r.json()["status_code"]][0]
-            log = [r.json()["extra"]["log_id"]][0]
-            dur = [r.json()["data"]["duration"]][0]
-            spkr = [r.json()["data"]["speaker"]][0]
-
-            b64d = base64.b64decode(vstr)
-
-            with open(filename, "wb") as out:
-                out.write(b64d)
-
+        if r.json()["message"] == "Couldn't load speech. Try again.":
             output_data = {
-                "status": msg.capitalize(),
-                "status_code": scode,
-                "duration": dur,
-                "speaker": spkr,
-                "log": log
-                }
+                "status": "Session ID is invalid",
+                "status_code": 5
+            }
 
             print(output_data)
-
-            if play is True:
-                playsound.playsound(filename)
-                os.remove(filename)
-
             return output_data
 
-        except Exception as e:
-            print(f"An error occurred during the request: {e}")
-            post_attempt_count += 1
-            if post_attempt_count < max_post_attempts:
-                print(f"Retrying in 5 seconds... (Attempt {post_attempt_count} of {max_post_attempts})")
-                time.sleep(5)
-            else:
-                raise Exception("Max retry attempts reached. Exiting retry loop.")
+        vstr = [r.json()["data"]["v_str"]][0]
+        msg = [r.json()["message"]][0]
+        scode = [r.json()["status_code"]][0]
+        log = [r.json()["extra"]["log_id"]][0]
+        dur = [r.json()["data"]["duration"]][0]
+        spkr = [r.json()["data"]["speaker"]][0]
+
+        b64d = base64.b64decode(vstr)
+
+        with open(filename, "wb") as out:
+            out.write(b64d)
+
+        output_data = {
+            "status": msg.capitalize(),
+            "status_code": scode,
+            "duration": dur,
+            "speaker": spkr,
+            "log": log
+        }
+
+        print(output_data)
+
+        if play is True:
+            playsound.playsound(filename)
+            os.remove(filename)
+
+        return output_data
+
+    except Exception as e:
+        raise Exception(f"An error occurred during the request: {e}")
 
 
-def tts_batch(session_id: str, text_speaker: str = 'en_us_002', req_text: str = 'TikTok Text to Speech', filename: str = 'voice.mp3'):
+def tts_batch(
+        session_id: str,
+        text_speaker: str = 'en_us_002',
+        req_text: str = 'TikTok Text to Speech',
+        filename: str = 'voice.mp3'
+):
     req_text = req_text.replace("+", "plus")
     req_text = req_text.replace(" ", "+")
     req_text = req_text.replace("&", "and")
@@ -186,83 +184,108 @@ def tts_batch(session_id: str, text_speaker: str = 'en_us_002', req_text: str = 
         'User-Agent': 'com.zhiliaoapp.musically/2022600030 (Linux; U; Android 7.1.2; es_ES; SM-G988N; Build/NRD90M;tt-ok/3.12.13.1)',
         'Cookie': f'sessionid={session_id}'
     }
+
     url = f"{api_uri}?text_speaker={text_speaker}&req_text={req_text}&speaker_map_type=0&aid=1233"
 
-    max_post_attempts = 3
-    post_attempt_count = 0
+    try:
+        r = requests.post(url, headers=headers)
 
-    while post_attempt_count < max_post_attempts:
-        try:
-            r = requests.post(url, headers=headers)
-
-            if r.json()["message"] == "Couldn't load speech. Try again.":
-                output_data = {"status": "Session ID is invalid", "status_code": 5}
-                print(output_data)
-                return output_data
-
-            vstr = [r.json()["data"]["v_str"]][0]
-            msg = [r.json()["message"]][0]
-            scode = [r.json()["status_code"]][0]
-            log = [r.json()["extra"]["log_id"]][0]
-            dur = [r.json()["data"]["duration"]][0]
-            spkr = [r.json()["data"]["speaker"]][0]
-
-            b64d = base64.b64decode(vstr)
-
-            with open(filename, "wb") as out:
-                out.write(b64d)
-
-            output_data = {
-                "status": msg.capitalize(),
-                "status_code": scode,
-                "duration": dur,
-                "speaker": spkr,
-                "log": log
-                }
-
+        if r.json()["message"] == "Couldn't load speech. Try again.":
+            output_data = {"status": "Session ID is invalid", "status_code": 5}
             print(output_data)
-
             return output_data
 
-        except Exception as e:
-            print(f"An error occurred during the request: {e}")
-            post_attempt_count += 1
-            if post_attempt_count < max_post_attempts:
-                print(f"Retrying in 5 seconds... (Attempt {post_attempt_count} of {max_post_attempts})")
-                time.sleep(5)
-            else:
-                raise Exception("Max retry attempts reached. Exiting retry loop.")
+        vstr = [r.json()["data"]["v_str"]][0]
+        msg = [r.json()["message"]][0]
+        scode = [r.json()["status_code"]][0]
+        log = [r.json()["extra"]["log_id"]][0]
+        dur = [r.json()["data"]["duration"]][0]
+        spkr = [r.json()["data"]["speaker"]][0]
+
+        b64d = base64.b64decode(vstr)
+
+        with open(filename, "wb") as out:
+            out.write(b64d)
+
+        output_data = {
+            "status": msg.capitalize(),
+            "status_code": scode,
+            "duration": dur,
+            "speaker": spkr,
+            "log": log
+        }
+
+        print(output_data)
+
+        return output_data
+
+    except Exception as e:
+        raise Exception(f"An error occurred during the request: {e}")
 
 
 def batch_create(filename: str = 'voice.mp3'):
     out = open(filename, 'wb')
 
     def sorted_alphanumeric(data):
-        convert = lambda text: int(text) if text.isdigit() else text.lower()
-        alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
+        def convert(text):
+            return int(text) if text.isdigit() else text.lower()
+
+        def alphanum_key(key):
+            return [convert(c) for c in re.split('([0-9]+)', key)]
+
         return sorted(data, key=alphanum_key)
 
-    for item in sorted_alphanumeric(os.listdir('./batch/')):
-        filestuff = open('./batch/' + item, 'rb').read()
-        out.write(filestuff)
+    for item in sorted_alphanumeric(os.listdir(_batch)):
+        file = open(os.path.join(_batch, item), 'rb').read()
+        out.write(file)
 
     out.close()
 
 
 def main():
-    parser = argparse.ArgumentParser(description = "Simple Python script to interact with the TikTok TTS API")
-    parser.add_argument("-v", "--voice", help = "the code of the desired voice")
-    parser.add_argument("-t", "--text", help = "the text to be read")
-    parser.add_argument("-s", "--session", help = "account session id")
-    parser.add_argument("-f", "--file", help = "use this if you wanna use 'text.txt'")
-    parser.add_argument("-n", "--name", help = "The name for the output file (.mp3)")
-    parser.add_argument("-p", "--play", action='store_true', help = "use this if you want to play your output")
+    parser = argparse.ArgumentParser(
+        description="Simple Python script to interact with the TikTok TTS API"
+    )
+
+    parser.add_argument(
+        "-v", "--voice", help="the code of the desired voice"
+    )
+
+    parser.add_argument(
+        "-t", "--text", help="the text to be read"
+    )
+
+    parser.add_argument(
+        "-s", "--session", help="account session id"
+    )
+
+    parser.add_argument(
+        "-f", "--file", help="use this if you wanna use 'text.txt'"
+    )
+
+    parser.add_argument(
+        "-n", "--name", help="The name for the output file (.mp3)"
+    )
+
+    parser.add_argument(
+        "-p",
+        "--play",
+        action='store_true',
+        help="use this if you want to play your output"
+    )
+
     args = parser.parse_args()
 
     text_speaker = args.voice
 
     if args.file is not None:
-        req_text = open(args.file, 'r', errors='ignore', encoding='utf-8').read()
+        req_text = open(
+            args.file,
+            'r',
+            errors='ignore',
+            encoding='utf-8'
+        ).read()
+
     else:
         if args.text is None:
             req_text = 'TikTok Text To Speech'
@@ -291,19 +314,26 @@ def main():
 
     if args.file is not None:
         chunk_size = 200
-        textlist = textwrap.wrap(req_text, width=chunk_size, break_long_words=True, break_on_hyphens=False)
 
-        os.makedirs('./batch/')
+        textlist = textwrap.wrap(
+            req_text,
+            width=chunk_size,
+            break_long_words=True,
+            break_on_hyphens=False
+        )
+
+        os.makedirs(_batch)
 
         for i, item in enumerate(textlist):
-            tts_batch(args.session, text_speaker, item, f'./batch/{i}.mp3')
+            batch = os.path.join(_batch, f'{i}.mp3')
+            tts_batch(args.session, text_speaker, item, batch)
 
         batch_create(filename)
 
-        for item in os.listdir('./batch/'):
-            os.remove('./batch/' + item)
+        for item in os.listdir(_batch):
+            os.remove(os.path.join(_batch, item))
 
-        os.removedirs('./batch/')
+        os.removedirs(_batch)
 
         return
 

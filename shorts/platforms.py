@@ -1,14 +1,18 @@
-from contextlib import ExitStack
-from apiclient.errors import HttpError
 import os
-from shorts.config import _launch_path
-from shorts.make_tts import _tts
+from contextlib import ExitStack
+
+from apiclient.errors import HttpError
+
+from shorts.config import _project_path
 from shorts.create_short import _create_video
 from shorts.get_reddit_stories import _get_content
 from shorts.make_submission_image import _generate_reddit_image
-from shorts.metadata import _title_video, _video_keywords
-from shorts.youtube import initialize_upload, get_authenticated_service
+from shorts.make_tts import _tts
+from shorts.metadata import _title_video
+from shorts.metadata import _video_keywords
 from shorts.utils import _clean_up
+from shorts.youtube import get_authenticated_service
+from shorts.youtube import initialize_upload
 
 
 def _create_short(**kwargs) -> None or list:
@@ -54,7 +58,7 @@ def _tiktok(**kwargs) -> None:
                 upload_video(
                     file_path,
                     description=video_title,
-                    cookies=os.path.join(_launch_path, 'cookies.txt'),
+                    cookies=os.path.join(_project_path, 'cookies.txt'),
                     browser='firefox',
                     headless=False
                 )

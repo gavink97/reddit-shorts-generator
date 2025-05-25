@@ -1,8 +1,12 @@
+import os
 import sqlite3
+
+from shorts.config import _project_path
 
 
 def create_tables():
-    db = sqlite3.connect("shorts.db")
+    database_path = os.path.join(_project_path, "shorts.db")
+    db = sqlite3.connect(database_path)
     cursor = db.cursor()
 
     create_uploads_table = """
@@ -30,7 +34,8 @@ def create_tables():
 
 
 def check_if_video_exists(submission_id: str, top_comment_id: str) -> bool:
-    db = sqlite3.connect("shorts.db")
+    database_path = os.path.join(_project_path, "shorts.db")
+    db = sqlite3.connect(database_path)
     cursor = db.cursor()
 
     videos_query = """
@@ -58,7 +63,8 @@ def check_if_video_exists(submission_id: str, top_comment_id: str) -> bool:
 
 
 def write_to_db(submission_id: str, top_comment_id: str) -> None:
-    db = sqlite3.connect("shorts.db")
+    database_path = os.path.join(_project_path, "shorts.db")
+    db = sqlite3.connect(database_path)
     cursor = db.cursor()
 
     write_to_videos = """
@@ -76,7 +82,8 @@ def write_to_db(submission_id: str, top_comment_id: str) -> None:
 
 
 def check_for_admin_posts(submission_id: str) -> bool:
-    db = sqlite3.connect("shorts.db")
+    database_path = os.path.join(_project_path, "shorts.db")
+    db = sqlite3.connect(database_path)
     cursor = db.cursor()
 
     videos_query = """

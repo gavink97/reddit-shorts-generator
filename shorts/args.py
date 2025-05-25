@@ -105,7 +105,7 @@ def _parse_args() -> dict:
         if args.platform != 'video':
             while not title.strip():
                 title = input(
-                    "A title is required to upload your video. Please enter a title:\n"
+                    "A title is required to upload. Please enter a title:\n"
                 )
 
             if keywords == '':

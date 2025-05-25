@@ -146,7 +146,7 @@ https://ko-fi.com/E1E119NG8M[Ko-fi] :)
 
 === Feature ideas
 * [ ] AI Generated Titles / Tags
-* [ ] Automating volumes for music / tts
+* [x] Automating volumes for music / tts
 
 == Star
 

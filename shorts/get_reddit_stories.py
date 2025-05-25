@@ -1,10 +1,11 @@
 import os
-import praw
 import random
 import time
 
+import praw
+
 from shorts.class_submission import Submission
-from shorts.config import subreddits
+from shorts.config import _subreddits
 
 
 def _connect_to_reddit(**kwargs) -> praw.Reddit:
@@ -29,7 +30,7 @@ def _get_content(reddit: praw.Reddit or None = None, **kwargs) -> dict:
     strategy = kwargs.get('strategy')
 
     while True:
-        subreddit = random.choice(subreddits)
+        subreddit = random.choice(_subreddits)
         subreddit_name = subreddit[0]
 
         try:
